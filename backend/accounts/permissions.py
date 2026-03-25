@@ -47,3 +47,11 @@ class IsManagerOrAttendant(BasePermission):
             request.user.role in ["manager", "attendant"]
         )
     
+
+class IsAdminOwnerManager(BasePermission):
+
+    def has_permission(self, request, view):
+        return (
+            request.user.is_authenticated and
+            request.user.role in ["admin", "owner", "manager"]
+        )

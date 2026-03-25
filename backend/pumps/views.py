@@ -1,3 +1,14 @@
-from django.shortcuts import render
+from rest_framework import viewsets
+from rest_framework.permissions import IsAuthenticated
+from accounts.permissions import IsAdmin
 
-# Create your views here.
+from .models import Pump
+from .serializers import PumpSerializer
+
+
+class PumpViewSet(viewsets.ModelViewSet):
+
+    queryset = Pump.objects.all()
+    serializer_class = PumpSerializer
+    permission_classes = [IsAuthenticated, IsAdmin]
+
