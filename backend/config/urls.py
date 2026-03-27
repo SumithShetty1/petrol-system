@@ -37,4 +37,5 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/', include(router.urls)),
     path("api/transactions/", include("transactions.urls")),
+    path("api/reports/", include("reports.urls")),
 ]
