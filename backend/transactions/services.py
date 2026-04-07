@@ -19,8 +19,8 @@ def process_transaction(data, attendant):
     fuel_type = data["fuel_type"]
     amount = Decimal(data["amount"])
 
-    if amount <= 0:
-        raise ValueError("Transaction amount must be greater than zero")
+    if amount < 0:
+        raise ValueError("Transaction amount cannot be negative")
     
     redeem_points = Decimal(data.get("redeem_points", 0))
 
@@ -59,7 +59,7 @@ def process_transaction(data, attendant):
 
     # Points earned
     points_earned = amount * POINT_RATE
-
+    print(points_earned)
     # Create transaction
     transaction = Transaction.objects.create(
         customer=customer,

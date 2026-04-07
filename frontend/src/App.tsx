@@ -1,18 +1,18 @@
 import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login";
-// import Transaction from "./pages/Transaction";
+import Transaction from "./pages/Transaction";
 // import Profile from "./pages/Profile";
 // import Dashboard from "./pages/Dashboard";
 
-// import ProtectedRoute from "./components/ProtectedRoute";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
   return (
     <Routes>
       <Route path="/" element={<Login />} />
 
-      {/* <Route
+      <Route
         path="/transaction"
         element={
           <ProtectedRoute>
@@ -21,7 +21,7 @@ function App() {
         }
       />
 
-      <Route
+      {/* <Route
         path="/profile"
         element={
           <ProtectedRoute>
