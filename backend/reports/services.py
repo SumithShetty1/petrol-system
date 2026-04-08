@@ -5,6 +5,10 @@ from datetime import timedelta
 from transactions.models import Transaction
 
 
+# ---------------------------------------------------
+# Pump Level Analytics
+# ---------------------------------------------------
+
 def today_sales(pump):
 
     today = timezone.now().date()
@@ -159,3 +163,67 @@ def attendant_performance(pump):
         .order_by("-total_sales")
     )
 
+
+# ---------------------------------------------------
+# Attendant Performance (Pump Level)
+# ---------------------------------------------------
+
+def attendant_performance(pump):
+
+    return (
+        Transaction.objects
+        .filter(pump=pump)
+        .values("attendant__name")
+        .annotate(
+            total_sales=Sum("amount"),
+            total_transactions=Count("id")
+        )
+        .order_by("-total_sales")
+    )
+
+
+# ---------------------------------------------------
+# Attendant Personal Dashboard
+# ---------------------------------------------------
+
+def attendant_sales(attendant, start_date=None, end_date=None):
+
+    queryset = Transaction.objects.filter(attendant=attendant)
+
+    if start_date and end_date:
+        queryset = queryset.filter(
+            created_at__date__range=[start_date, end_date]
+        )
+
+    result = queryset.aggregate(
+        total_sales=Sum("amount"),
+        total_quantity=Sum("quantity"),
+        total_transactions=Count("id")
+    )
+
+    fuel = (
+        queryset
+        .values("fuel_type")
+        .annotate(
+            litres=Sum("quantity"),
+            amount=Sum("amount")
+        )
+    )
+
+    fuel_breakdown = {
+        "petrol": {"litres": 0, "amount": 0},
+        "diesel": {"litres": 0, "amount": 0}
+    }
+
+    for item in fuel:
+        fuel_breakdown[item["fuel_type"]] = {
+            "litres": item["litres"] or 0,
+            "amount": item["amount"] or 0
+        }
+
+    return {
+        "total_sales": result["total_sales"] or 0,
+        "total_quantity": result["total_quantity"] or 0,
+        "total_transactions": result["total_transactions"] or 0,
+        "fuel_breakdown": fuel_breakdown
+    }

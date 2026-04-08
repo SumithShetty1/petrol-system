@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import CustomerLookup from "../components/transaction/CustomerLookup";
 import FuelSelector from "../components/transaction/FuelSelector";
 import AmountInput from "../components/transaction/AmountInput";
-import TransactionSummary from "../components/transaction/TransactionSummary";
 
 import { createTransaction } from "../services/transactionService";
 import { fetchCustomer } from "../services/customerService";
+import { getFuelRates } from "../services/fuelService";
 
 export default function Transaction() {
 
@@ -21,9 +21,67 @@ export default function Transaction() {
   const [fuelType, setFuelType] = useState("");
   const [amount, setAmount] = useState("");
 
+  const [fuelRates, setFuelRates] = useState<any>({});
+  const [quantity, setQuantity] = useState(0);
+
   const [isRedeemApplied, setIsRedeemApplied] = useState(false);
 
-  const [result, setResult] = useState<any>(null);
+  const [transactionSuccess, setTransactionSuccess] = useState(false);
+  const [transactionDetails, setTransactionDetails] = useState<any>(null);
+
+  // -----------------------------
+  // Fetch Fuel Rates
+  // -----------------------------
+
+  useEffect(() => {
+
+    const fetchRates = async () => {
+
+      try {
+
+        const data = await getFuelRates(1);
+
+        const rates: any = {};
+
+        data.forEach((item: any) => {
+          rates[item.fuel_type] = item.price_per_litre;
+        });
+
+        setFuelRates(rates);
+
+      } catch {
+
+        console.log("Error fetching fuel rates");
+
+      }
+
+    };
+
+    fetchRates();
+
+  }, []);
+
+  // -----------------------------
+  // Auto Quantity Calculation
+  // -----------------------------
+
+  useEffect(() => {
+
+    if (amount && fuelType && fuelRates[fuelType]) {
+
+      const price = fuelRates[fuelType];
+
+      const qty = parseFloat(amount) / price;
+
+      setQuantity(qty);
+
+    } else {
+
+      setQuantity(0);
+
+    }
+
+  }, [amount, fuelType, fuelRates]);
 
   // -----------------------------
   // Redeem Logic
@@ -81,6 +139,7 @@ export default function Transaction() {
       alert("Error fetching customer");
 
     }
+
   };
 
   // -----------------------------
@@ -97,14 +156,15 @@ export default function Transaction() {
         name: customerName,
         pump: 1,
         fuel_type: fuelType,
-        amount: amount,
+        amount: getFinalPayable(),
         redeem_points: isRedeemApplied ? 1000 : 0
 
       };
 
       const res = await createTransaction(data);
 
-      setResult(res);
+      setTransactionDetails(res);
+      setTransactionSuccess(true);
 
     } catch {
 
@@ -113,6 +173,101 @@ export default function Transaction() {
     }
 
   };
+
+  // -----------------------------
+  // Reset Transaction
+  // -----------------------------
+
+  const handleNewTransaction = () => {
+
+    setPhone("");
+
+    setCustomerName("");
+    setCustomerPoints(0);
+
+    setIsExisting(false);
+    setHasFetched(false);
+
+    setFuelType("");
+    setAmount("");
+
+    setQuantity(0);
+
+    setIsRedeemApplied(false);
+
+    setTransactionSuccess(false);
+    setTransactionDetails(null);
+
+  };
+
+  // -----------------------------
+  // Receipt Screen
+  // -----------------------------
+
+  if (transactionSuccess && transactionDetails) {
+
+    return (
+
+      <div className="min-h-screen flex justify-center items-center bg-gray-100 p-6">
+
+        <div className="w-full max-w-[420px] bg-white rounded-2xl p-6 shadow-lg space-y-6">
+
+          <h1 className="text-2xl font-bold text-green-600 text-center">
+            Transaction Successful
+          </h1>
+
+          <div className="space-y-2 text-sm">
+
+            <div className="flex justify-between">
+              <span>Customer</span>
+              <span>{customerName}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Fuel Type</span>
+              <span>{fuelType}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Quantity</span>
+              <span>{transactionDetails.quantity}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Amount Paid</span>
+              <span>₹{transactionDetails.amount}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Points Used</span>
+              <span>{transactionDetails.points_used}</span>
+            </div>
+
+            <div className="flex justify-between">
+              <span>Points Earned</span>
+              <span>{transactionDetails.points_earned}</span>
+            </div>
+
+          </div>
+
+          <button
+            onClick={handleNewTransaction}
+            className="w-full bg-blue-500 text-white py-3 rounded-xl"
+          >
+            New Transaction
+          </button>
+
+        </div>
+
+      </div>
+
+    );
+
+  }
+
+  // -----------------------------
+  // Main Screen
+  // -----------------------------
 
   return (
 
@@ -124,15 +279,11 @@ export default function Transaction() {
           Fuel Transaction
         </h1>
 
-        {/* Customer Lookup */}
-
         <CustomerLookup
           phone={phone}
           setPhone={setPhone}
           onFetch={handleFetchCustomer}
         />
-
-        {/* Customer Card */}
 
         {hasFetched && (
 
@@ -154,8 +305,6 @@ export default function Transaction() {
 
         )}
 
-        {/* Name Input for New Customer */}
-
         {hasFetched && !isExisting && (
 
           <input
@@ -167,21 +316,39 @@ export default function Transaction() {
 
         )}
 
-        {/* Fuel Selection */}
-
         <FuelSelector
           fuelType={fuelType}
           setFuelType={setFuelType}
         />
 
-        {/* Amount */}
+        {/* Fuel Price + Quantity */}
+
+        {fuelType && fuelRates[fuelType] && (
+
+          <div className="bg-blue-50 rounded-xl p-4 space-y-2">
+
+            <div className="flex justify-between text-sm">
+
+              <span>Fuel Price</span>
+              <span>₹{fuelRates[fuelType]} / L</span>
+
+            </div>
+
+            <div className="flex justify-between text-sm">
+
+              <span>Quantity</span>
+              <span>{quantity.toFixed(2)} L</span>
+
+            </div>
+
+          </div>
+
+        )}
 
         <AmountInput
           amount={amount}
           setAmount={setAmount}
         />
-
-        {/* Redeem UI */}
 
         {hasFetched && customerPoints >= 1000 && (
 
@@ -211,8 +378,6 @@ export default function Transaction() {
           </div>
 
         )}
-
-        {/* Final Payable */}
 
         {amount && (
 
@@ -255,8 +420,6 @@ export default function Transaction() {
 
         )}
 
-        {/* Points Earned */}
-
         {amount && (
 
           <div className="bg-green-50 rounded-xl p-4 text-center">
@@ -273,8 +436,6 @@ export default function Transaction() {
 
         )}
 
-        {/* Submit */}
-
         <button
           onClick={handleSubmit}
           className="w-full bg-blue-500 text-white py-3 rounded-xl hover:bg-blue-600"
@@ -282,13 +443,10 @@ export default function Transaction() {
           Submit Transaction
         </button>
 
-        {/* Result */}
-
-        <TransactionSummary result={result} />
-
       </div>
 
     </div>
 
   );
+
 }

@@ -2,44 +2,45 @@ import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Transaction from "./pages/Transaction";
-// import Profile from "./pages/Profile";
-// import Dashboard from "./pages/Dashboard";
+import Profile from "./pages/Profile";
 
 import ProtectedRoute from "./components/ProtectedRoute";
+import MainLayout from "./components/layouts/MainLayout";
 
 function App() {
+
   return (
+
     <Routes>
+
       <Route path="/" element={<Login />} />
 
       <Route
         path="/transaction"
         element={
           <ProtectedRoute>
-            <Transaction />
-          </ProtectedRoute>
-        }
-      />
-
-      {/* <Route
-        path="/profile"
-        element={
-          <ProtectedRoute>
-            <Profile />
+            <MainLayout>
+              <Transaction />
+            </MainLayout>
           </ProtectedRoute>
         }
       />
 
       <Route
-        path="/dashboard"
+        path="/profile"
         element={
           <ProtectedRoute>
-            <Dashboard />
+            <MainLayout>
+              <Profile />
+            </MainLayout>
           </ProtectedRoute>
         }
-      /> */}
+      />
+
     </Routes>
+
   );
+
 }
 
 export default App;

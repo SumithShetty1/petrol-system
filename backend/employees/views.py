@@ -1,5 +1,8 @@
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.views import APIView
+from rest_framework.response import Response
+
 from accounts.permissions import IsAdminOwnerManager
 
 from .models import Employee
@@ -31,3 +34,29 @@ class EmployeeViewSet(viewsets.ModelViewSet):
                 return Employee.objects.filter(pump=employee.pump)
 
         return Employee.objects.none()
+
+
+class AttendantProfileView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+
+        if not employee:
+            return Response({"error": "Employee not found"}, status=404)
+
+        pump = employee.pump
+
+        data = {
+            "name": employee.name,
+            "phone": employee.phone_number,
+            "role": request.user.role,
+            "pump_id": pump.id,
+            "pump_name": pump.pump_name,
+            "location": pump.location
+        }
+
+        return Response(data)
+    

@@ -35,6 +35,7 @@ router.register(r'fuel-rates', FuelRateViewSet)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/auth/', include('accounts.urls')),
+    path("api/employees/", include("employees.urls")),
     path('api/', include(router.urls)),
     path("api/transactions/", include("transactions.urls")),
     path("api/reports/", include("reports.urls")),
