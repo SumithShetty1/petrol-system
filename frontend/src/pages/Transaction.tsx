@@ -10,6 +10,8 @@ import { getFuelRates } from "../services/fuelService";
 
 export default function Transaction() {
 
+  const [pumpId, setPumpId] = useState<number | null>(null);
+
   const [phone, setPhone] = useState("");
 
   const [customerName, setCustomerName] = useState("");
@@ -30,6 +32,20 @@ export default function Transaction() {
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
 
   // -----------------------------
+  // Load Pump ID from localStorage
+  // -----------------------------
+
+  useEffect(() => {
+
+    const storedPump = localStorage.getItem("pump_id");
+
+    if (storedPump) {
+      setPumpId(Number(storedPump));
+    }
+
+  }, []);
+
+  // -----------------------------
   // Fetch Fuel Rates
   // -----------------------------
 
@@ -37,9 +53,11 @@ export default function Transaction() {
 
     const fetchRates = async () => {
 
+      if (!pumpId) return;
+
       try {
 
-        const data = await getFuelRates(1);
+        const data = await getFuelRates(pumpId);
 
         const rates: any = {};
 
@@ -59,7 +77,7 @@ export default function Transaction() {
 
     fetchRates();
 
-  }, []);
+  }, [pumpId]);
 
   // -----------------------------
   // Auto Quantity Calculation
@@ -148,13 +166,18 @@ export default function Transaction() {
 
   const handleSubmit = async () => {
 
+    if (!pumpId) {
+      alert("Pump not found for attendant");
+      return;
+    }
+
     try {
 
       const data = {
 
         mobile_number: phone,
         name: customerName,
-        pump: 1,
+        pump: pumpId,
         fuel_type: fuelType,
         amount: getFinalPayable(),
         redeem_points: isRedeemApplied ? 1000 : 0
@@ -320,8 +343,6 @@ export default function Transaction() {
           fuelType={fuelType}
           setFuelType={setFuelType}
         />
-
-        {/* Fuel Price + Quantity */}
 
         {fuelType && fuelRates[fuelType] && (
 
