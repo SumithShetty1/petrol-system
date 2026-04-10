@@ -4,150 +4,129 @@ import { useNavigate } from "react-router-dom";
 import { getProfile } from "../services/profileService";
 import { getAttendantDashboard } from "../services/dashboardService";
 
-export default function Profile() {
+import ProfileHeader from "../components/profile/ProfileHeader";
+import ProfileCard from "../components/profile/ProfileCard";
+import PerformanceDashboard from "../components/profile/PerformanceDashboard";
 
+export type DateFilter = "today" | "week" | "month" | "year" | "custom";
+
+export default function Profile() {
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<any>(null);
   const [stats, setStats] = useState<any>(null);
+  const [range, setRange] = useState<DateFilter>("today");
+  const [loading, setLoading] = useState(true);
+  
+  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
-  const [range, setRange] = useState("today");
-
-  const loadDashboard = async (filter:string) => {
-    const d = await getAttendantDashboard(filter);
-    setStats(d);
+  const loadDashboard = async (filter: string, customStart?: string, customEnd?: string) => {
+    try {
+      const data = await getAttendantDashboard(filter, customStart, customEnd);
+      setStats(data);
+    } catch (error) {
+      console.error("Error loading dashboard:", error);
+    }
   };
 
   useEffect(() => {
-
     const load = async () => {
-
-      const p = await getProfile();
-
-      setProfile(p);
-
-      await loadDashboard(range);
-
+      try {
+        const p = await getProfile();
+        setProfile(p);
+        await loadDashboard(range);
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      } finally {
+        setLoading(false);
+      }
     };
 
     load();
-
   }, []);
 
-  const changeFilter = async (filter:string) => {
-
+  const changeFilter = async (filter: DateFilter) => {
     setRange(filter);
-    await loadDashboard(filter);
+    
+    if (filter === "custom") {
+      setShowCustomDatePicker(true);
+    } else {
+      setShowCustomDatePicker(false);
+      await loadDashboard(filter);
+    }
+  };
 
+  const handleCustomDateSubmit = async () => {
+    if (startDate && endDate) {
+      await loadDashboard("custom", startDate, endDate);
+      setShowCustomDatePicker(false);
+    }
+  };
+
+  const handleCancelCustomDate = () => {
+    setShowCustomDatePicker(false);
+    setRange("today");
+    loadDashboard("today");
+    setStartDate("");
+    setEndDate("");
   };
 
   const handleLogout = () => {
-
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-
+    localStorage.removeItem("pump_id");
     navigate("/");
-
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500 text-lg">Loading...</div>
+      </div>
+    );
+  }
+
   if (!profile || !stats) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500 text-lg">No data available</div>
+      </div>
+    );
   }
 
   return (
+    <div className="min-h-screen bg-gray-50 pb-6 md:pb-8">
+      <ProfileHeader title="Attendant Profile" />
 
-    <div className="p-6 space-y-6">
+      <div className="px-4 md:px-8 lg:px-12 -mt-16 relative z-20">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+            
+            {/* Profile Card - Left Column */}
+            <div className="lg:col-span-1">
+              <ProfileCard profile={profile} onLogout={handleLogout} />
+            </div>
 
-      <h1 className="text-2xl font-bold">
-        Attendant Profile
-      </h1>
-
-      {/* Profile Card */}
-
-      <div className="bg-white p-4 rounded-xl shadow space-y-2">
-
-        <p><b>Name:</b> {profile.name}</p>
-        <p><b>Role:</b> {profile.role}</p>
-        <p><b>Phone:</b> {profile.phone}</p>
-
-        <hr/>
-
-        <p><b>Pump ID:</b> {profile.pump_id}</p>
-        <p><b>Pump Name:</b> {profile.pump_name}</p>
-        <p><b>Location:</b> {profile.location}</p>
-
-        <button
-          onClick={handleLogout}
-          className="w-full mt-3 bg-red-500 text-white py-2 rounded-lg"
-        >
-          Logout
-        </button>
-
-      </div>
-
-      {/* Filters */}
-
-      <div className="flex gap-2">
-
-        {["today","week","month","year"].map((f)=>(
-          <button
-            key={f}
-            onClick={()=>changeFilter(f)}
-            className={`px-3 py-1 rounded-lg text-sm ${
-              range === f
-                ? "bg-blue-500 text-white"
-                : "bg-gray-200"
-            }`}
-          >
-            {f}
-          </button>
-        ))}
-
-      </div>
-
-      {/* Total Sales */}
-
-      <div className="bg-white p-4 rounded-xl shadow">
-
-        <p className="text-sm text-gray-500">
-          Total Sales
-        </p>
-
-        <p className="text-2xl font-bold text-blue-600">
-          ₹{stats.total_sales.toFixed(2)}
-        </p>
-
-      </div>
-
-      {/* Fuel Breakdown */}
-
-      <div className="grid grid-cols-2 gap-4">
-
-        {Object.entries(stats.fuel_breakdown).map(([type,fuel]:any)=>(
-          
-          <div
-            key={type}
-            className="bg-white p-4 rounded-xl shadow"
-          >
-
-            <p className="font-semibold">
-              {type.toUpperCase()}
-            </p>
-
-            <p className="text-sm">
-              {fuel.litres.toFixed(2)} L
-            </p>
-
-            <p className="text-sm text-gray-600">
-              ₹{fuel.amount.toFixed(2)}
-            </p>
-
+            {/* Performance Dashboard - Right Column */}
+            <div className="lg:col-span-2">
+              <PerformanceDashboard
+                stats={stats}
+                range={range}
+                showCustomDatePicker={showCustomDatePicker}
+                startDate={startDate}
+                endDate={endDate}
+                onChangeFilter={changeFilter}
+                onStartDateChange={setStartDate}
+                onEndDateChange={setEndDate}
+                onCustomDateSubmit={handleCustomDateSubmit}
+                onCancelCustomDate={handleCancelCustomDate}
+              />
+            </div>
           </div>
-
-        ))}
-
+        </div>
       </div>
-
     </div>
   );
 }

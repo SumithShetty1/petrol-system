@@ -4,8 +4,18 @@ import Login from "./pages/Login";
 import Transaction from "./pages/Transaction";
 import Profile from "./pages/Profile";
 
+// Manager Pages
+import ManagerDashboard from "./pages/ManagerDashboard";
+import ManagerAttendants from "./pages/ManagerAttendants";
+import ManagerTransactions from "./pages/ManagerTransactions";
+import ManagerCustomers from "./pages/ManagerCustomers";
+import ManagerProfile from "./pages/ManagerProfile";
+
 import ProtectedRoute from "./components/ProtectedRoute";
-import MainLayout from "./components/layouts/MainLayout";
+
+// Layouts
+import AttendantLayout from "./components/layouts/AttendantLayout";
+import ManagerLayout from "./components/layouts/ManagerLayout";
 
 function App() {
 
@@ -13,15 +23,18 @@ function App() {
 
     <Routes>
 
+      {/* LOGIN */}
       <Route path="/" element={<Login />} />
+
+      {/* ATTENDANT APP */}
 
       <Route
         path="/transaction"
         element={
           <ProtectedRoute>
-            <MainLayout>
+            <AttendantLayout>
               <Transaction />
-            </MainLayout>
+            </AttendantLayout>
           </ProtectedRoute>
         }
       />
@@ -30,9 +43,66 @@ function App() {
         path="/profile"
         element={
           <ProtectedRoute>
-            <MainLayout>
+            <AttendantLayout>
               <Profile />
-            </MainLayout>
+            </AttendantLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      {/* MANAGER APP */}
+
+      <Route
+        path="/manager/dashboard"
+        element={
+          <ProtectedRoute>
+            <ManagerLayout>
+              <ManagerDashboard />
+            </ManagerLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager/attendants"
+        element={
+          <ProtectedRoute>
+            <ManagerLayout>
+              <ManagerAttendants />
+            </ManagerLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager/transactions"
+        element={
+          <ProtectedRoute>
+            <ManagerLayout>
+              <ManagerTransactions />
+            </ManagerLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager/customers"
+        element={
+          <ProtectedRoute>
+            <ManagerLayout>
+              <ManagerCustomers />
+            </ManagerLayout>
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/manager/profile"
+        element={
+          <ProtectedRoute>
+            <ManagerLayout>
+              <ManagerProfile />
+            </ManagerLayout>
           </ProtectedRoute>
         }
       />
