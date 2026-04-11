@@ -1,10 +1,5 @@
 import api from "../api/api";
 
-export const getDashboard = async (pumpId: number) => {
-  const res = await api.get(`/reports/dashboard/${pumpId}/`);
-  return res.data;
-};
-
 export const getAttendants = async () => {
   const res = await api.get("/employees/");
   return res.data;
