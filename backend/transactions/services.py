@@ -17,7 +17,9 @@ def process_transaction(data, attendant):
     mobile = data["mobile_number"]
     pump = get_object_or_404(Pump, id=data["pump"])
     fuel_type = data["fuel_type"]
-    amount = Decimal(data["amount"])
+
+    original_amount = Decimal(data["amount"])
+    amount = original_amount
 
     if amount < 0:
         raise ValueError("Transaction amount cannot be negative")
@@ -27,8 +29,10 @@ def process_transaction(data, attendant):
     if redeem_points < 0:
         raise ValueError("Redeem points cannot be negative")
 
+    manager = pump.manager
+
     # Get or create customer
-    customer, created = Customer.objects.get_or_create(
+    customer, _ = Customer.objects.select_for_update().get_or_create(
         mobile_number=mobile,
         defaults={"name": data.get("name", "Customer")}
     )
@@ -43,7 +47,7 @@ def process_transaction(data, attendant):
     price = fuel_rate.price_per_litre
 
     # Calculate quantity
-    quantity = amount / price
+    quantity = original_amount / price
 
     # Redemption logic
     points_used = Decimal("0")
@@ -59,37 +63,67 @@ def process_transaction(data, attendant):
 
     # Points earned
     points_earned = amount * POINT_RATE
-    print(points_earned)
+    
+    # Update customer points
+    remaining_points = customer.total_points - points_used + points_earned
+
+    customer.total_points = remaining_points
+    customer.save()
+
     # Create transaction
     transaction = Transaction.objects.create(
         customer=customer,
         pump=pump,
         attendant=attendant,
+        manager=manager,
+
         fuel_type=fuel_type,
-        amount=amount,
+
+        original_amount=original_amount,
+        final_amount=amount,
         quantity=quantity,
+
         points_used=points_used,
-        points_earned=points_earned
+        points_earned=points_earned,
+        remaining_points=remaining_points,
+
+        customer_name=customer.name,
+        customer_mobile=customer.mobile_number,
+
+        pump_name=pump.pump_name,
+        pump_location=pump.location,
+
+        attendant_name=attendant.user.get_full_name() or attendant.user.username,
+        attendant_phone=attendant.user.username,
+
+        manager_name=(
+            manager.user.get_full_name() or manager.user.username
+            if manager else None
+        ),
+        manager_phone=(
+            manager.user.username
+            if manager else None
+        ),
     )
 
-    # Update customer points
-    customer.total_points = customer.total_points - points_used + points_earned
-    customer.save()
-
     # Record points history
+    # Earn
     if points_earned > 0:
         PointsHistory.objects.create(
             customer=customer,
             transaction=transaction,
             points_change=points_earned,
+            balance_after=remaining_points,
             type="earn"
         )
 
+    # Redeem
     if points_used > 0:
         PointsHistory.objects.create(
             customer=customer,
             transaction=transaction,
-            points_change=points_used,
+            points_change=-points_used,
+            balance_after=remaining_points,
             type="redeem"
         )
 

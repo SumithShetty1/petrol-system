@@ -161,9 +161,6 @@ export default function Transaction() {
     return (
       <TransactionSuccessScreen
         transactionDetails={transactionDetails}
-        customerName={customerName}
-        fuelType={fuelType}
-        customerPoints={customerPoints}
         onNewTransaction={handleNewTransaction}
       />
     );
@@ -177,7 +174,7 @@ export default function Transaction() {
       <div className="px-4 md:px-8 -mt-16 relative z-20">
         <div className="max-w-2xl lg:max-w-3xl mx-auto">
           <div className="bg-white rounded-3xl md:rounded-4xl shadow-xl p-6 md:p-8 space-y-6 md:space-y-7">
-            
+
             <PhoneInputSection
               phone={phone}
               onPhoneChange={setPhone}

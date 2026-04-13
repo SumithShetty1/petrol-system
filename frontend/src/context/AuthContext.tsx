@@ -21,18 +21,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem("access", access);
     localStorage.setItem("refresh", refresh);
 
-    try {
-
-      const profile = await getProfile();
-
-      localStorage.setItem("pump_id", profile.pump_id);
-
-    } catch {
-
-      console.log("Could not fetch profile");
-
-    }
-
     setIsAuthenticated(true);
   };
 
@@ -40,7 +28,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-    localStorage.removeItem("pump_id");
 
     setIsAuthenticated(false);
   };

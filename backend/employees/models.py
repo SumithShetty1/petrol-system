@@ -4,14 +4,22 @@ from pumps.models import Pump
 
 class Employee(models.Model):
 
-    name = models.CharField(max_length=200)
-    phone_number = models.CharField(max_length=15)
+    pump = models.ForeignKey(
+        Pump,
+        on_delete=models.CASCADE,
+        related_name='employees'
+    )
 
-    pump = models.ForeignKey(Pump, on_delete=models.CASCADE, related_name='employees')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='employee_profile')
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='employee_profile'
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    
+
     def __str__(self):
-        return self.name
+        name = self.user.get_full_name() or self.user.username
+        return f"{name} - {self.pump.pump_name}"
     

@@ -55,14 +55,6 @@ export default function ProfileCard({ profile, onLogout }: Props) {
           label="Location"
           value={profile.location || "—"}
         />
-
-        <InfoRow
-          icon={<User className="w-4 h-4 md:w-5 md:h-5 text-purple-500" />}
-          iconBgColor="bg-purple-50"
-          label="Pump ID"
-          value={`#${profile.pump_id || "—"}`}
-          noBorder
-        />
       </div>
 
       {/* Logout Button */}

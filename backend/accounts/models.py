@@ -15,3 +15,7 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
+    def __str__(self):
+        name = self.get_full_name() or "Unnamed User"
+        return f"{name} ({self.role}) - {self.username}"
+    

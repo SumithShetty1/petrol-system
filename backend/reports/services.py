@@ -1,7 +1,9 @@
 from django.db.models import Sum, Count
 
-
 from transactions.models import Transaction
+
+from datetime import datetime, time
+from django.utils import timezone
 
 
 # ---------------------------------------------------
@@ -13,19 +15,22 @@ def pump_sales_summary(pump, start_date=None, end_date=None):
     queryset = Transaction.objects.filter(pump=pump)
 
     if start_date and end_date:
+        start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
+        end_datetime = timezone.make_aware(datetime.combine(end_date, time.max))
+
         queryset = queryset.filter(
-            created_at__date__range=[start_date, end_date]
+            created_at__range=[start_datetime, end_datetime]
         )
 
     totals = queryset.aggregate(
-        total_sales=Sum("amount"),
+        total_sales=Sum("final_amount"),
         total_quantity=Sum("quantity"),
         credits_earned=Sum("points_earned"),
         credits_redeemed=Sum("points_used")
     )
 
     fuel = queryset.values("fuel_type").annotate(
-        sales=Sum("amount"),
+        sales=Sum("final_amount"),
         quantity=Sum("quantity")
     )
 
@@ -66,12 +71,15 @@ def attendant_sales_summary(attendant, start_date=None, end_date=None):
     queryset = Transaction.objects.filter(attendant=attendant)
 
     if start_date and end_date:
+        start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
+        end_datetime = timezone.make_aware(datetime.combine(end_date, time.max))
+    
         queryset = queryset.filter(
-            created_at__date__range=[start_date, end_date]
+            created_at__range=[start_datetime, end_datetime]
         )
 
     result = queryset.aggregate(
-        total_sales=Sum("amount"),
+        total_sales=Sum("final_amount"),
         total_quantity=Sum("quantity"),
         total_transactions=Count("id")
     )
@@ -81,7 +89,7 @@ def attendant_sales_summary(attendant, start_date=None, end_date=None):
         .values("fuel_type")
         .annotate(
             litres=Sum("quantity"),
-            amount=Sum("amount")
+            amount=Sum("final_amount")
         )
     )
 

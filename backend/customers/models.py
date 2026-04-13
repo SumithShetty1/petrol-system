@@ -10,7 +10,7 @@ class Customer(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        return self.name
+        return f"{self.name} - {self.mobile_number}"
     
     
 class PointsHistory(models.Model):
@@ -18,16 +18,30 @@ class PointsHistory(models.Model):
     TYPE_CHOICES = (
         ('earn', 'Earn'),
         ('redeem', 'Redeem'),
+        ('adjustment', 'Adjustment'),
     )
 
-    customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='points_history')
-    transaction = models.ForeignKey('transactions.Transaction', on_delete=models.CASCADE, related_name='points_history')
+    customer = models.ForeignKey(
+        Customer,
+        on_delete=models.CASCADE,
+        related_name='points_history'
+    )
+
+    transaction = models.ForeignKey(
+        'transactions.Transaction',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
 
     points_change = models.DecimalField(max_digits=10, decimal_places=2)
-    type = models.CharField(max_length=10, choices=TYPE_CHOICES)
 
-    date = models.DateTimeField(auto_now_add=True)
+    balance_after = models.DecimalField(
+        max_digits=10,
+        decimal_places=2
+    )
 
-    def __str__(self):
-        return f"{self.customer.name} - {self.type}"
-    
+    type = models.CharField(max_length=20, choices=TYPE_CHOICES)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+

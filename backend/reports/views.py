@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from accounts.permissions import IsAdminOwnerManager
 from pumps.models import Pump
@@ -19,13 +19,18 @@ class DashboardView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminOwnerManager]
 
-    def get(self, request, pump_id):
+    def get(self, request):
 
-        pump = get_object_or_404(Pump, id=pump_id)
+        employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+
+        if not employee:
+            return Response({"error": "Employee not found"}, status=404)
+
+        pump = employee.pump
 
         filter_type = request.query_params.get("range", "today")
 
-        end_date = timezone.now().date()
+        end_date = timezone.localtime().date()
 
         if filter_type == "today":
             start_date = end_date
@@ -40,8 +45,16 @@ class DashboardView(APIView):
             start_date = end_date - timedelta(days=365)
 
         elif filter_type == "custom":
-            start_date = request.query_params.get("start_date")
-            end_date = request.query_params.get("end_date")
+            try:
+                start_date = datetime.strptime(
+                    request.query_params.get("start_date"), "%Y-%m-%d"
+                ).date()
+
+                end_date = datetime.strptime(
+                    request.query_params.get("end_date"), "%Y-%m-%d"
+                ).date()
+            except:
+                return Response({"error": "Invalid date format"}, status=400)
 
         data = pump_sales_summary(pump, start_date, end_date)
 
@@ -62,7 +75,7 @@ class AttendantDashboardView(APIView):
         filter_type = request.query_params.get("range", "today")
 
         start_date = None
-        end_date = timezone.now().date()
+        end_date = timezone.localtime().date()
 
         if filter_type == "today":
             start_date = end_date
@@ -77,9 +90,17 @@ class AttendantDashboardView(APIView):
             start_date = end_date - timedelta(days=365)
 
         elif filter_type == "custom":
-            start_date = request.query_params.get("start_date")
-            end_date = request.query_params.get("end_date")
+            try:
+                start_date = datetime.strptime(
+                    request.query_params.get("start_date"), "%Y-%m-%d"
+                ).date()
 
+                end_date = datetime.strptime(
+                    request.query_params.get("end_date"), "%Y-%m-%d"
+                ).date()
+            except:
+                return Response({"error": "Invalid date format"}, status=400)
+            
         data = attendant_sales_summary(employee, start_date, end_date)
 
         return Response(data)

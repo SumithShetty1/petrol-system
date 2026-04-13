@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Droplet, Star, Calendar } from "lucide-react";
 import { getDashboard } from "../services/dashboardService";
 import { getProfile } from "../services/profileService";
-import { getPumpId } from "../utils/pump";
+
 
 type DateFilter = "today" | "week" | "month" | "year" | "custom";
 
@@ -23,13 +23,7 @@ export default function ManagerDashboard() {
     customEnd?: string
   ) => {
     try {
-      const pumpId = getPumpId();
-      if (!pumpId) {
-        console.error("Pump ID not found");
-        return;
-      }
-
-      const dashboard = await getDashboard(pumpId, filter, customStart, customEnd);
+      const dashboard = await getDashboard(filter, customStart, customEnd);
       setData(dashboard);
     } catch (error) {
       console.error("Dashboard error:", error);
@@ -39,16 +33,10 @@ export default function ManagerDashboard() {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const pumpId = getPumpId();
-        if (!pumpId) {
-          console.error("Pump ID not found");
-          return;
-        }
-
         // Load profile and dashboard data
         const [profileData, dashboardData] = await Promise.all([
           getProfile(),
-          getDashboard(pumpId, "today"),
+          getDashboard("today"),
         ]);
 
         setProfile(profileData);

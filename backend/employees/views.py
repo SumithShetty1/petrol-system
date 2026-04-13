@@ -11,7 +11,7 @@ from .serializers import EmployeeSerializer
 
 class EmployeeViewSet(viewsets.ModelViewSet):
     
-    queryset = Employee.objects.all()
+    queryset = Employee.objects.select_related("user", "pump")
     serializer_class = EmployeeSerializer
     permission_classes = [IsAuthenticated, IsAdminOwnerManager]
 
@@ -28,7 +28,7 @@ class EmployeeViewSet(viewsets.ModelViewSet):
 
         # Manager sees employees of their pump
         if user.role == "manager":
-            employee = Employee.objects.filter(user=user).first()
+            employee = Employee.objects.select_related("pump").filter(user=user).first()
 
             if employee:
                 return Employee.objects.filter(pump=employee.pump)
@@ -50,10 +50,9 @@ class AttendantProfileView(APIView):
         pump = employee.pump
 
         data = {
-            "name": employee.name,
-            "phone": employee.phone_number,
+            "name": request.user.get_full_name(),
+            "phone": request.user.username,
             "role": request.user.role,
-            "pump_id": pump.id,
             "pump_name": pump.pump_name,
             "location": pump.location
         }
