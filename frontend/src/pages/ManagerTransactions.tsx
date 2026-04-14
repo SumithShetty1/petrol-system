@@ -140,10 +140,19 @@ export default function ManagerTransactions() {
   // Helper function to format date
   const formatDate = (dateString: string) => {
     if (!dateString) return { date: "—", time: "—" };
+
     const date = new Date(dateString);
+
     return {
-      date: date.toLocaleDateString(),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date: date.toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      time: date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
   };
 
