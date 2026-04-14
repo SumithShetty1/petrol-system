@@ -54,6 +54,7 @@ export default function ProfileCard({ profile, onLogout }: Props) {
           iconBgColor="bg-orange-50"
           label="Location"
           value={profile.location || "—"}
+          noBorder={true}
         />
       </div>
 

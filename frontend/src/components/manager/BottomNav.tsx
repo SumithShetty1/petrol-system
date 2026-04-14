@@ -4,7 +4,7 @@ import {
   Users,
   FileText,
   Search,
-  User
+  Settings
 } from "lucide-react";
 
 export default function BottomNav() {
@@ -33,10 +33,10 @@ export default function BottomNav() {
       path: "/manager/customers"
     },
     {
-      label: "Profile",
-      icon: User,
-      path: "/manager/profile"
-    }
+  label: "Settings",
+  icon: Settings,
+  path: "/manager/settings"
+}
   ];
 
   return (

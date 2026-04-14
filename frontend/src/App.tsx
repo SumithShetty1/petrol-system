@@ -9,7 +9,7 @@ import ManagerDashboard from "./pages/ManagerDashboard";
 import ManagerAttendants from "./pages/ManagerAttendants";
 import ManagerTransactions from "./pages/ManagerTransactions";
 import ManagerCustomers from "./pages/ManagerCustomers";
-import ManagerProfile from "./pages/ManagerProfile";
+import ManagerSettings from "./pages/ManagerSettings";
 
 import ProtectedRoute from "./components/ProtectedRoute";
 
@@ -97,11 +97,11 @@ function App() {
       />
 
       <Route
-        path="/manager/profile"
+        path="/manager/settings"
         element={
           <ProtectedRoute>
             <ManagerLayout>
-              <ManagerProfile />
+              <ManagerSettings />
             </ManagerLayout>
           </ProtectedRoute>
         }
