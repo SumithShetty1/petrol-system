@@ -343,6 +343,7 @@ export default function ManagerTransactions() {
                   <tr>
                     <th className="px-3 py-3 text-center text-xs whitespace-nowrap">Sl No</th>
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Name</th>
+                    <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Mobile</th>
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Fuel Type</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Amount (₹)</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Quantity (L)</th>
@@ -378,6 +379,13 @@ export default function ManagerTransactions() {
                         <td className="px-3 py-3 whitespace-nowrap">
                           <p className="text-gray-900 font-medium text-xs">
                             {transaction.customer_name || "—"}
+                          </p>
+                        </td>
+
+                        {/* Customer Mobile */}
+                        <td className="px-3 py-3 whitespace-nowrap">
+                          <p className="text-gray-500 text-xs">
+                            {transaction.customer_mobile || "—"}
                           </p>
                         </td>
 
