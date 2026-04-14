@@ -5,6 +5,8 @@ from accounts.permissions import IsOwnerOrManager
 from .models import FuelRate
 from .serializers import FuelRateSerializer
 
+from employees.models import Employee
+
 
 class FuelRateViewSet(viewsets.ModelViewSet):
    
@@ -13,15 +15,14 @@ class FuelRateViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-
-        queryset = FuelRate.objects.all()
-
-        pump_id = self.request.query_params.get("pump")
-
-        if pump_id:
-            queryset = queryset.filter(pump_id=pump_id)
-
-        return queryset
+        user = self.request.user
+    
+        employee = Employee.objects.select_related("pump").filter(user=user).first()
+    
+        if not employee:
+            return FuelRate.objects.none()
+    
+        return FuelRate.objects.filter(pump=employee.pump)
 
 
     def get_permissions(self):

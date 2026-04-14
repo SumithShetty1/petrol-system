@@ -17,8 +17,6 @@ import SubmitButton from "../components/transaction/SubmitButton";
 import TransactionSuccessScreen from "../components/transaction/TransactionSuccessScreen";
 
 export default function Transaction() {
-  const [pumpId, setPumpId] = useState<number | null>(null);
-
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPoints, setCustomerPoints] = useState(0);
@@ -34,20 +32,12 @@ export default function Transaction() {
   const [transactionSuccess, setTransactionSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
 
-  // Load Pump ID
-  useEffect(() => {
-    const storedPump = localStorage.getItem("pump_id");
-    if (storedPump) {
-      setPumpId(Number(storedPump));
-    }
-  }, []);
 
   // Fetch Fuel Rates
   useEffect(() => {
     const fetchRates = async () => {
-      if (!pumpId) return;
       try {
-        const data = await getFuelRates(pumpId);
+        const data = await getFuelRates();
         const rates: any = {};
         data.forEach((item: any) => {
           rates[item.fuel_type] = item.price_per_litre;
@@ -58,7 +48,7 @@ export default function Transaction() {
       }
     };
     fetchRates();
-  }, [pumpId]);
+  }, []);
 
   // Auto Quantity Calculation
   useEffect(() => {
@@ -116,16 +106,10 @@ export default function Transaction() {
 
   // Submit Transaction
   const handleSubmit = async () => {
-    if (!pumpId) {
-      alert("Pump not found for attendant");
-      return;
-    }
-
     try {
       const data = {
         mobile_number: phone,
         name: customerName,
-        pump: pumpId,
         fuel_type: fuelType,
         amount: amount,
         redeem_points: isRedeemApplied ? 1000 : 0,
@@ -171,9 +155,9 @@ export default function Transaction() {
     <div className="min-h-screen bg-gray-50">
       <TransactionHeader title="Fuel Transaction" />
 
-      <div className="px-4 md:px-8 -mt-16 relative z-20">
-        <div className="max-w-2xl lg:max-w-3xl mx-auto">
-          <div className="bg-white rounded-3xl md:rounded-4xl shadow-xl p-6 md:p-8 space-y-6 md:space-y-7">
+      <div className="px-4 md:px-8 -mt-10 md:-mt-12 relative z-20">
+        <div className="max-w-5xl mx-auto">
+          <div className="bg-white rounded-3xl md:rounded-4xl shadow-md p-6 md:p-8 space-y-3 md:space-y-3">
 
             <PhoneInputSection
               phone={phone}

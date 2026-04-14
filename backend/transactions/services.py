@@ -5,7 +5,6 @@ from decimal import Decimal
 from customers.models import Customer, PointsHistory
 from fuel.models import FuelRate
 from .models import Transaction
-from pumps.models import Pump
 
 
 POINT_RATE = Decimal("0.1")   # ₹1 = 0.1 points
@@ -15,7 +14,11 @@ POINT_REDEEM_VALUE = Decimal("0.1")   # 1 point = ₹0.1
 def process_transaction(data, attendant):
 
     mobile = data["mobile_number"]
-    pump = get_object_or_404(Pump, id=data["pump"])
+    pump = attendant.pump
+
+    if not pump:
+        raise ValueError("Attendant is not assigned to any pump")
+
     fuel_type = data["fuel_type"]
 
     original_amount = Decimal(data["amount"])

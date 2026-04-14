@@ -174,16 +174,15 @@ export default function ManagerTransactions() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 pt-8 pb-8 px-6 rounded-b-[2rem]">
+        <div className="flex items-center justify-between min-h-[60px]">
+
           <div>
-            <h1 className="text-white text-lg font-medium">
-              Transactions
+            <h1 className="text-white text-center text-lg md:text-2xl font-medium relative z-10">
+              Transactions History
             </h1>
-            <p className="text-white/80 text-xs">
-              {filteredTransactions.length} transactions
-            </p>
-          </div>
+
+            </div>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
@@ -191,6 +190,7 @@ export default function ManagerTransactions() {
           >
             <Filter className="w-5 h-5" />
           </button>
+
         </div>
       </div>
 
@@ -354,11 +354,10 @@ export default function ManagerTransactions() {
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Name</th>
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Mobile</th>
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Fuel Type</th>
-                    <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Amount (₹)</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Quantity (L)</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Credit Redeemed</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Credit Earned</th>
-                    <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Remaining Points</th>
+                    <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Remaining Credit</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Original Amt (₹)</th>
                     <th className="px-3 py-3 text-right text-xs whitespace-nowrap">Final Amt (₹)</th>
                     <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Pump Name</th>
@@ -416,13 +415,6 @@ export default function ManagerTransactions() {
                               {getFuelTypeDisplay(transaction.fuel_type)}
                             </span>
                           </div>
-                        </td>
-
-                        {/* Amount (Final Amount) */}
-                        <td className="px-3 py-3 text-right whitespace-nowrap">
-                          <span className="text-gray-900 font-medium text-xs">
-                            ₹{parseFloat(transaction.final_amount || 0).toFixed(2)}
-                          </span>
                         </td>
 
                         {/* Quantity */}

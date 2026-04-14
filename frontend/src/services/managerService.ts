@@ -30,7 +30,3 @@ export const getTransactions = async (
   return res.data;
 };
 
-export const searchCustomer = async (phone:string) => {
-  const res = await api.get(`/customers/?mobile_number=${phone}`);
-  return res.data;
-};

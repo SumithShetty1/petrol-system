@@ -11,7 +11,7 @@ export default function ManagerDashboard() {
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
-  
+
   // Custom date range state
   const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
   const [startDate, setStartDate] = useState("");
@@ -52,7 +52,7 @@ export default function ManagerDashboard() {
 
   const handleFilterChange = async (filter: DateFilter) => {
     setDateFilter(filter);
-    
+
     if (filter === "custom") {
       setShowCustomDatePicker(true);
     } else {
@@ -111,13 +111,18 @@ export default function ManagerDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-500 to-blue-600 pt-8 pb-6 px-6 rounded-b-[2rem]">
-        <h1 className="text-white text-center text-lg font-medium">
-          Pump Dashboard
-        </h1>
-        <p className="text-white/80 text-center mt-1 text-sm">
-          {profile.pump_name} - {profile.location || "Main Location"}
-        </p>
+      <div className="bg-gradient-to-br from-blue-500 to-blue-600 pt-8 pb-8 px-6 rounded-b-[2rem]">
+        <div className="min-h-[60px] flex flex-col justify-center">
+
+          <h1 className="text-white text-center text-lg md:text-2xl font-medium relative z-10">
+            Pump Dashboard
+          </h1>
+
+          <p className="text-white/80 text-center mt-1 text-sm">
+            {profile.pump_name} - {profile.location || "Main Location"}
+          </p>
+
+        </div>
       </div>
 
       {/* Date Filter */}
@@ -127,11 +132,10 @@ export default function ManagerDashboard() {
             <button
               key={filter}
               onClick={() => handleFilterChange(filter)}
-              className={`px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all ${
-                dateFilter === filter
+              className={`px-5 py-2.5 rounded-full text-sm font-medium whitespace-nowrap flex-shrink-0 transition-all ${dateFilter === filter
                   ? "bg-blue-500 text-white shadow-md"
                   : "border border-blue-500 text-blue-600 hover:bg-blue-50"
-              }`}
+                }`}
             >
               {filter.charAt(0).toUpperCase() + filter.slice(1)}
             </button>

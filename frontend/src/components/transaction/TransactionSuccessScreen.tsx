@@ -29,7 +29,7 @@ export default function TransactionSuccessScreen({
 
       <div className="px-4 md:px-8 -mt-16 relative z-20">
         <div className="max-w-2xl mx-auto">
-          <div className="bg-white rounded-3xl md:rounded-4xl shadow-xl p-6 md:p-8 space-y-6 md:space-y-8">
+          <div className="bg-white rounded-3xl md:rounded-4xl shadow-md p-6 md:p-8 space-y-6 md:space-y-8">
             
             {/* Success Icon */}
             <div className="flex justify-center">

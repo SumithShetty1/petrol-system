@@ -77,6 +77,12 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
         else:
             return Transaction.objects.none()
 
+        # Customer filter
+        customer_mobile = self.request.query_params.get("customer_mobile")
+
+        if customer_mobile:
+            queryset = queryset.filter(customer_mobile=customer_mobile)
+
         # Attendant filter
         attendant_id = self.request.query_params.get("attendant")
 
