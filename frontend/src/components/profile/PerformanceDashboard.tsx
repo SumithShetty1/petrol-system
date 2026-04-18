@@ -32,6 +32,7 @@ export default function PerformanceDashboard({
   onCustomDateSubmit,
   onCancelCustomDate,
 }: Props) {
+  if (!stats) return null;
   
   const petrolData = stats.fuel_breakdown?.petrol || { litres: 0, amount: 0 };
   const dieselData = stats.fuel_breakdown?.diesel || { litres: 0, amount: 0 };

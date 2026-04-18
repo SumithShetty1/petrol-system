@@ -6,7 +6,7 @@ export const getDashboard = async (
   startDate?: string,
   endDate?: string
 ) => {
-  let url = `/reports/dashboard/?range=${range}`;
+  let url = `/reports/pump/?range=${range}`;
 
   if (range === "custom" && startDate && endDate) {
     url += `&start_date=${startDate}&end_date=${endDate}`;
@@ -22,7 +22,24 @@ export const getAttendantDashboard = async (
   startDate?: string,
   endDate?: string
 ) => {
-  let url = `reports/attendant-dashboard/?range=${range}`;
+  let url = `reports/attendant/me/?range=${range}`;
+
+  if (range === "custom" && startDate && endDate) {
+    url += `&start_date=${startDate}&end_date=${endDate}`;
+  }
+
+  const res = await api.get(url);
+  return res.data;
+};
+
+
+export const getAttendantDashboardById = async (
+  attendantId: number,
+  range: string,
+  startDate?: string,
+  endDate?: string
+) => {
+  let url = `/reports/attendant/${attendantId}/?range=${range}`;
 
   if (range === "custom" && startDate && endDate) {
     url += `&start_date=${startDate}&end_date=${endDate}`;

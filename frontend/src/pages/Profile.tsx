@@ -76,7 +76,6 @@ export default function Profile() {
   const handleLogout = () => {
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
-    localStorage.removeItem("pump_id");
     navigate("/");
   };
 
@@ -106,7 +105,7 @@ export default function Profile() {
 
             {/* Profile Card - Left Column */}
             <div className="lg:col-span-1">
-              <ProfileCard profile={profile} onLogout={handleLogout} />
+              <ProfileCard profile={profile} onLogout={handleLogout} showLogout={true} />
             </div>
 
             {/* Performance Dashboard - Right Column */}

@@ -11,3 +11,37 @@ export const loginUser = async (
 
   return response.data;
 };
+
+export const createAttendant = async (data: {
+  first_name: string;
+  last_name: string;
+  username: string;
+  password: string;
+  status: boolean;
+}) => {
+  const res = await api.post("/auth/register/", {
+    ...data,
+    role: "attendant",
+  });
+
+  return res.data;
+};
+
+export const updateAttendant = async (
+  id: number,
+  data: {
+    first_name: string;
+    last_name: string;
+    username: string;
+    password?: string;
+    status: boolean;
+  }
+) => {
+  const res = await api.patch(`/auth/users/${id}/`, data);
+  return res.data;
+};
+
+export const deleteAttendant = async (id: number) => {
+  const res = await api.delete(`/auth/users/${id}/`);
+  return res.data;
+};

@@ -15,7 +15,7 @@ from .services import (
 )
 
 
-class DashboardView(APIView):
+class PumpDashboardView(APIView):
 
     permission_classes = [IsAuthenticated, IsAdminOwnerManager]
 
@@ -61,7 +61,7 @@ class DashboardView(APIView):
         return Response(data)
     
 
-class AttendantDashboardView(APIView):
+class MyAttendantDashboardView(APIView):
 
     permission_classes = [IsAuthenticated]
 
@@ -102,6 +102,61 @@ class AttendantDashboardView(APIView):
                 return Response({"error": "Invalid date format"}, status=400)
             
         data = attendant_sales_summary(employee, start_date, end_date)
+
+        return Response(data)
+    
+
+class AttendantDashboardDetailView(APIView):
+
+    permission_classes = [IsAuthenticated, IsAdminOwnerManager]
+
+    def get(self, request, attendant_id):
+
+        # Get manager's employee record
+        manager_employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+
+        if not manager_employee:
+            return Response({"error": "Manager not found"}, status=404)
+
+        # Get requested attendant
+        attendant = get_object_or_404(
+            Employee.objects.select_related("pump", "user"),
+            id=attendant_id,
+            user__role="attendant"
+        )
+
+        if attendant.pump != manager_employee.pump:
+            return Response({"error": "Unauthorized"}, status=403)
+
+        filter_type = request.query_params.get("range", "today")
+
+        end_date = timezone.localtime().date()
+
+        if filter_type == "today":
+            start_date = end_date
+
+        elif filter_type == "week":
+            start_date = end_date - timedelta(days=7)
+
+        elif filter_type == "month":
+            start_date = end_date - timedelta(days=30)
+
+        elif filter_type == "year":
+            start_date = end_date - timedelta(days=365)
+
+        elif filter_type == "custom":
+            try:
+                start_date = datetime.strptime(
+                    request.query_params.get("start_date"), "%Y-%m-%d"
+                ).date()
+
+                end_date = datetime.strptime(
+                    request.query_params.get("end_date"), "%Y-%m-%d"
+                ).date()
+            except:
+                return Response({"error": "Invalid date format"}, status=400)
+
+        data = attendant_sales_summary(attendant, start_date, end_date)
 
         return Response(data)
     

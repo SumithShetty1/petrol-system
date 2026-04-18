@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import LoginScreen from "../components/auth/LoginScreen";
+import LoginScreen from "../components/login/LoginScreen";
 import { loginUser } from "../services/authService";
 import { useAuth } from "../context/AuthContext";
+
+import { jwtDecode } from "jwt-decode";
 
 export default function Login() {
   const [phone, setPhone] = useState("");
@@ -15,11 +17,29 @@ export default function Login() {
 
   const handleLogin = async () => {
     setIsLoading(true);
-    
+
     try {
       const data = await loginUser(phone, password);
+
+      // Save tokens
       login(data.access, data.refresh);
-      navigate("/transaction");
+
+      // Decode token
+      const decoded: any = jwtDecode(data.access);
+
+      const role = decoded.role;
+
+      // Role-based navigation
+      if (role === "attendant") {
+        navigate("/attendant/transaction");
+      } else if (role === "manager") {
+        navigate("/manager/dashboard");
+      } else if (role === "owner" || role === "admin") {
+        navigate("/manager/dashboard");
+      } else {
+        navigate("/");
+      }
+
     } catch (error) {
       alert("Invalid username or password");
     } finally {
@@ -27,7 +47,7 @@ export default function Login() {
     }
   };
 
-  const isValid = phone.length === 10 && password.length >= 4;
+  const isValid = phone.length === 10;
 
   return (
     <LoginScreen

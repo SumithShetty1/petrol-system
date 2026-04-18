@@ -106,15 +106,16 @@ export default function ManagerSettings() {
   };
 
   // Avatar initials
-  const getInitials = (name: string) => {
-    if (!name) return "U";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
+  const getInitials = (first: string, last: string) => {
+    const firstInitial = first?.[0] || "";
+    const lastInitial = last?.[0] || "";
+
+    if (!firstInitial && !lastInitial) return "U";
+
+    return (firstInitial + lastInitial).toUpperCase();
   };
+
+  const fullName = `${profile?.first_name || ""} ${profile?.last_name || ""}`.trim();
 
   if (loading) {
     return (
@@ -157,11 +158,11 @@ export default function ManagerSettings() {
           <div className="flex flex-col items-center mb-6">
             <div className="w-20 h-20 rounded-full bg-blue-500 flex items-center justify-center text-white mb-3 shadow-md">
               <span className="text-2xl font-medium">
-                {getInitials(profile.name)}
+                {getInitials(profile.first_name, profile.last_name)}
               </span>
             </div>
             <h3 className="text-gray-900 text-lg font-semibold">
-              {profile.name}
+              {fullName || "Unknown User"}
             </h3>
             <p className="text-sm text-blue-600 font-medium capitalize">
               {profile.role}

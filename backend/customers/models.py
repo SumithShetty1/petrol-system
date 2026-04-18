@@ -21,9 +21,14 @@ class PointsHistory(models.Model):
         ('adjustment', 'Adjustment'),
     )
 
+    # -------------------------
+    # RELATION
+    # -------------------------
     customer = models.ForeignKey(
         Customer,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
         related_name='points_history'
     )
 
@@ -34,6 +39,15 @@ class PointsHistory(models.Model):
         blank=True
     )
 
+    # -------------------------
+    # SNAPSHOT DATA
+    # -------------------------
+    customer_name = models.CharField(max_length=200)
+    customer_mobile = models.CharField(max_length=15)
+
+    # -------------------------
+    # POINTS
+    # -------------------------
     points_change = models.DecimalField(max_digits=10, decimal_places=2)
 
     balance_after = models.DecimalField(
@@ -44,4 +58,3 @@ class PointsHistory(models.Model):
     type = models.CharField(max_length=20, choices=TYPE_CHOICES)
 
     created_at = models.DateTimeField(auto_now_add=True)
-

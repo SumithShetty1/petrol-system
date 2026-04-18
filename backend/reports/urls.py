@@ -1,7 +1,16 @@
 from django.urls import path
-from .views import DashboardView, AttendantDashboardView
+from .views import (
+    PumpDashboardView,
+    MyAttendantDashboardView,
+    AttendantDashboardDetailView
+)
 
 urlpatterns = [
-    path("dashboard/", DashboardView.as_view()),
-    path("attendant-dashboard/", AttendantDashboardView.as_view()),
+    path("pump/", PumpDashboardView.as_view()),
+
+    # Logged-in attendant
+    path("attendant/me/", MyAttendantDashboardView.as_view()),
+
+    # Manager viewing specific attendant
+    path("attendant/<int:attendant_id>/", AttendantDashboardDetailView.as_view()),
 ]

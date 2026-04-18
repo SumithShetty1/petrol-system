@@ -10,21 +10,31 @@ class Transaction(models.Model):
         ('diesel', 'Diesel'),
     )
 
+    # -------------------------
+    # RELATIONS
+    # -------------------------
+
     customer = models.ForeignKey(
         'customers.Customer',
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,   
+        null=True,
+        blank=True,
         related_name='transactions'
     )
 
     pump = models.ForeignKey(
         Pump,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,   
+        null=True,
+        blank=True,
         related_name='transactions'
     )
 
     attendant = models.ForeignKey(
         Employee,
-        on_delete=models.CASCADE,
+        on_delete=models.SET_NULL,   
+        null=True,
+        blank=True,
         related_name='transactions'
     )
 
@@ -32,8 +42,13 @@ class Transaction(models.Model):
         Employee,
         on_delete=models.SET_NULL,
         null=True,
+        blank=True,
         related_name="managed_transactions"
     )
+
+    # -------------------------
+    # SNAPSHOT FIELDS
+    # -------------------------
 
     customer_name = models.CharField(max_length=200)
     customer_mobile = models.CharField(max_length=15)
@@ -47,16 +62,25 @@ class Transaction(models.Model):
     manager_name = models.CharField(max_length=200, null=True, blank=True)
     manager_phone = models.CharField(max_length=15, null=True, blank=True)
 
-    # Fuel
+    # -------------------------
+    # FUEL
+    # -------------------------
+
     fuel_type = models.CharField(max_length=10, choices=FUEL_TYPES)
 
-    # Amounts
+    # -------------------------
+    # AMOUNTS
+    # -------------------------
+
     original_amount = models.DecimalField(max_digits=10, decimal_places=2)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
 
     quantity = models.DecimalField(max_digits=10, decimal_places=3)
 
-    # Points
+    # -------------------------
+    # LOYALTY POINTS
+    # -------------------------
+
     points_used = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     points_earned = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     remaining_points = models.DecimalField(
@@ -64,8 +88,16 @@ class Transaction(models.Model):
         decimal_places=2,
         default=0
     )
-    
+
+    # -------------------------
+    # TIMESTAMP
+    # -------------------------
+
     created_at = models.DateTimeField(auto_now_add=True)
+
+    # -------------------------
+    # STRING REPRESENTATION
+    # -------------------------
 
     def __str__(self):
         return f"{self.customer_name} | {self.fuel_type} | ₹{self.final_amount} | {self.pump_name}"

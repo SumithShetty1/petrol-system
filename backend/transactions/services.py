@@ -115,6 +115,10 @@ def process_transaction(data, attendant):
         PointsHistory.objects.create(
             customer=customer,
             transaction=transaction,
+        
+            customer_name=customer.name,
+            customer_mobile=customer.mobile_number,
+        
             points_change=points_earned,
             balance_after=remaining_points,
             type="earn"
@@ -125,6 +129,10 @@ def process_transaction(data, attendant):
         PointsHistory.objects.create(
             customer=customer,
             transaction=transaction,
+        
+            customer_name=customer.name,
+            customer_mobile=customer.mobile_number,
+        
             points_change=-points_used,
             balance_after=remaining_points,
             type="redeem"

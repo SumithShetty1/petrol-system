@@ -26,12 +26,11 @@ function App() {
       {/* LOGIN */}
       <Route path="/" element={<Login />} />
 
-      {/* ATTENDANT APP */}
-
+      {/* ATTENDANT */}
       <Route
-        path="/transaction"
+        path="/attendant/transaction"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["attendant"]}>
             <AttendantLayout>
               <Transaction />
             </AttendantLayout>
@@ -40,9 +39,9 @@ function App() {
       />
 
       <Route
-        path="/profile"
+        path="/attendant/profile"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["attendant"]}>
             <AttendantLayout>
               <Profile />
             </AttendantLayout>
@@ -50,12 +49,11 @@ function App() {
         }
       />
 
-      {/* MANAGER APP */}
-
+      {/* MANAGER */}
       <Route
         path="/manager/dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["manager"]}>
             <ManagerLayout>
               <ManagerDashboard />
             </ManagerLayout>
@@ -66,7 +64,7 @@ function App() {
       <Route
         path="/manager/attendants"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["manager"]}>
             <ManagerLayout>
               <ManagerAttendants />
             </ManagerLayout>
@@ -77,7 +75,7 @@ function App() {
       <Route
         path="/manager/transactions"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["manager"]}>
             <ManagerLayout>
               <ManagerTransactions />
             </ManagerLayout>
@@ -88,7 +86,7 @@ function App() {
       <Route
         path="/manager/customers"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["manager"]}>
             <ManagerLayout>
               <ManagerCustomers />
             </ManagerLayout>
@@ -99,7 +97,7 @@ function App() {
       <Route
         path="/manager/settings"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute allowedRoles={["manager"]}>
             <ManagerLayout>
               <ManagerSettings />
             </ManagerLayout>

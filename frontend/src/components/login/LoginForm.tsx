@@ -1,7 +1,6 @@
 import FormTitle from "./FormTitle";
 import PhoneInput from "./PhoneInput";
 import PasswordInput from "./PasswordInput";
-import ForgotPasswordLink from "./ForgotPasswordLink";
 import LoginButton from "./LoginButton";
 
 type Props = {
@@ -31,12 +30,8 @@ export default function LoginForm({
         <PhoneInput phone={phone} onChange={onPhoneChange} />
       </div>
 
-      <div className="mb-4">
+      <div className="mb-12 md:mb-16">
         <PasswordInput password={password} onChange={onPasswordChange} />
-      </div>
-
-      <div className="mb-8">
-        <ForgotPasswordLink />
       </div>
 
       <LoginButton

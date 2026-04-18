@@ -8,3 +8,29 @@ export const createTransaction = async (data: any) => {
 
   return response.data;
 };
+
+
+export const getTransactions = async (
+  range: string,
+  startDate?: string,
+  endDate?: string,
+  attendantId?: string,
+  fuelType?: string
+) => {
+  let url = `/transactions/?range=${range}`;
+
+  if (attendantId && attendantId !== "all") {
+    url += `&attendant=${attendantId}`;
+  }
+
+  if (fuelType && fuelType !== "all") {
+    url += `&fuel=${fuelType}`;
+  }
+
+  if (range === "custom" && startDate && endDate) {
+    url += `&start_date=${startDate}&end_date=${endDate}`;
+  }
+
+  const res = await api.get(url);
+  return res.data;
+};

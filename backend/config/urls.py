@@ -19,7 +19,6 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 
 from pumps.views import PumpViewSet
-from employees.views import EmployeeViewSet
 from customers.views import CustomerViewSet
 from fuel.views import FuelRateViewSet
 
@@ -27,7 +26,6 @@ from fuel.views import FuelRateViewSet
 router = DefaultRouter()
 
 router.register(r'pumps', PumpViewSet)
-router.register(r'employees', EmployeeViewSet)
 router.register(r'customers', CustomerViewSet)
 router.register(r'fuel-rates', FuelRateViewSet)
 

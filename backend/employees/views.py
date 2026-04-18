@@ -9,6 +9,9 @@ from .models import Employee
 from .serializers import EmployeeSerializer
 
 
+# -------------------------------
+# Employee ViewSet (General)
+# -------------------------------
 class EmployeeViewSet(viewsets.ModelViewSet):
     
     queryset = Employee.objects.select_related("user", "pump")
@@ -18,15 +21,15 @@ class EmployeeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
 
-        # Admin sees all employees
+        # Admin → all employees
         if user.role == "admin":
             return Employee.objects.all()
 
-        # Owner sees employees of their pumps
+        # Owner → employees of their pumps
         if user.role == "owner":
             return Employee.objects.filter(pump__owner=user)
 
-        # Manager sees employees of their pump
+        # Manager → employees of their pump
         if user.role == "manager":
             employee = Employee.objects.select_related("pump").filter(user=user).first()
 
@@ -36,7 +39,51 @@ class EmployeeViewSet(viewsets.ModelViewSet):
         return Employee.objects.none()
 
 
-class AttendantProfileView(APIView):
+# -------------------------------
+# Attendants List API
+# -------------------------------
+class AttendantListView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        # Admin → all attendants
+        if user.role == "admin":
+            attendants = Employee.objects.filter(user__role="attendant")
+
+        # Owner → attendants of owned pumps
+        elif user.role == "owner":
+            attendants = Employee.objects.filter(
+                pump__owner=user,
+                user__role="attendant"
+            )
+
+        # Manager → attendants of their pump
+        elif user.role == "manager":
+            employee = Employee.objects.select_related("pump").filter(user=user).first()
+
+            if not employee:
+                return Response([])
+
+            attendants = Employee.objects.filter(
+                pump=employee.pump,
+                user__role="attendant"
+            )
+
+        else:
+            attendants = Employee.objects.none()
+
+        serializer = EmployeeSerializer(attendants, many=True)
+        return Response(serializer.data)
+
+
+# -------------------------------
+# Profile API (Attendant/Manager)
+# -------------------------------
+class EmployeeProfileView(APIView):
 
     permission_classes = [IsAuthenticated]
 
@@ -47,15 +94,6 @@ class AttendantProfileView(APIView):
         if not employee:
             return Response({"error": "Employee not found"}, status=404)
 
-        pump = employee.pump
-
-        data = {
-            "name": request.user.get_full_name(),
-            "phone": request.user.username,
-            "role": request.user.role,
-            "pump_name": pump.pump_name,
-            "location": pump.location
-        }
-
-        return Response(data)
+        serializer = EmployeeSerializer(employee)
+        return Response(serializer.data)
     

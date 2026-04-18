@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Droplet, Calendar, X, MapPin, Filter } from "lucide-react";
-import { getTransactions, getAttendants } from "../services/managerService";
+import { getTransactions } from "../services/transactionService";
+import { getAttendants } from "../services/employeeService";
 
 
 type DateFilter = "today" | "week" | "month" | "year" | "custom";
@@ -179,14 +180,14 @@ export default function ManagerTransactions() {
 
           <div>
             <h1 className="text-white text-center text-lg md:text-2xl font-medium relative z-10">
-              Transactions History
+              Transaction History
             </h1>
 
             </div>
 
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white"
+            className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-md hover:bg-gray-100 transition-colors"
           >
             <Filter className="w-5 h-5" />
           </button>
@@ -216,7 +217,7 @@ export default function ManagerTransactions() {
 
                   {attendants.map((att) => (
                     <option key={att.id} value={att.id}>
-                      {att.name}
+                      {att.first_name} {att.last_name}
                     </option>
                   ))}
                 </select>
