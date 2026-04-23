@@ -2,6 +2,7 @@ import AppLayout from "./AppLayout";
 import {
   attendantNav,
   managerNav,
+  ownerNav,
 } from "../config/navConfig";
 
 const roleConfig = {
@@ -9,8 +10,14 @@ const roleConfig = {
     navItems: attendantNav,
     paddingBottom: "pb-16",
   },
+
   manager: {
     navItems: managerNav,
+    paddingBottom: "pb-20",
+  },
+
+  owner: {
+    navItems: ownerNav,
     paddingBottom: "pb-20",
   },
 };

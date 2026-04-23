@@ -6,6 +6,8 @@ import {
   FileText,
   Search,
   Settings,
+  Fuel,
+  Building2,
 } from "lucide-react";
 
 export const attendantNav = [
@@ -46,5 +48,28 @@ export const managerNav = [
     label: "Settings",
     path: "/manager/settings",
     icon: Settings,
+  },
+];
+
+export const ownerNav = [
+  {
+    label: "Dashboard",
+    path: "/owner/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Pumps",
+    path: "/owner/pumps",
+    icon: Building2,
+  },
+  {
+    label: "Transactions",
+    path: "/owner/transactions",
+    icon: FileText,
+  },
+  {
+    label: "Profile",
+    path: "/owner/profile",
+    icon: User,
   },
 ];
