@@ -68,8 +68,12 @@ def pump_sales_summary(pump, start_date=None, end_date=None):
 
 def attendant_sales_summary(attendant, start_date=None, end_date=None):
 
-    queryset = Transaction.objects.filter(attendant=attendant)
+    phone = attendant.user.username
 
+    queryset = Transaction.objects.filter(
+        attendant_phone=phone
+    )
+    
     if start_date and end_date:
         start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
         end_datetime = timezone.make_aware(datetime.combine(end_date, time.max))

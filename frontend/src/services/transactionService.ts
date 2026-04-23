@@ -14,13 +14,13 @@ export const getTransactions = async (
   range: string,
   startDate?: string,
   endDate?: string,
-  attendantId?: string,
+  attendantPhone?: string,
   fuelType?: string
 ) => {
   let url = `/transactions/?range=${range}`;
 
-  if (attendantId && attendantId !== "all") {
-    url += `&attendant=${attendantId}`;
+  if (attendantPhone && attendantPhone !== "all") {
+    url += `&attendant=${attendantPhone}`;
   }
 
   if (fuelType && fuelType !== "all") {

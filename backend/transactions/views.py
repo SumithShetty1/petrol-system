@@ -84,11 +84,11 @@ class TransactionViewSet(viewsets.ReadOnlyModelViewSet):
             queryset = queryset.filter(customer_mobile=customer_mobile)
 
         # Attendant filter
-        attendant_id = self.request.query_params.get("attendant")
+        attendant_phone = self.request.query_params.get("attendant")
 
-        if attendant_id:
-            queryset = queryset.filter(attendant_id=attendant_id)
-
+        if attendant_phone and attendant_phone != "all":
+            queryset = queryset.filter(attendant_phone=attendant_phone)
+        
         # Fuel filter
         fuel_type = self.request.query_params.get("fuel")
 
