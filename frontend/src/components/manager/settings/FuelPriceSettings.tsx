@@ -25,10 +25,13 @@ export default function FuelPriceSettings({
   return (
     <div className="mt-6 bg-white rounded-2xl p-5 shadow-md">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-gray-900 font-semibold flex items-center gap-2">
-          <Droplet className="w-5 h-5 text-blue-500" />
+        <h3 className="text-gray-900 font-semibold mb-4 flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
+            <Droplet className="w-5 h-5 text-blue-500" />
+          </div>
           Fuel Price Settings
         </h3>
+
         {!isEditing && (
           <button
             onClick={onEdit}

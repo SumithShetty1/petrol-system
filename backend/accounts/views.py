@@ -8,6 +8,7 @@ from .models import User
 from .serializers import UserSerializer, CustomTokenSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from employees.models import Employee
+from rest_framework.views import APIView
 
 
 class RegisterUserView(generics.CreateAPIView):
@@ -59,3 +60,19 @@ class UpdateUserView(generics.UpdateAPIView):
         user.delete()
         
         return Response({"message": "User deleted successfully"})
+    
+
+class MyProfileView(APIView):
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        return Response({
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "phone": user.username,
+            "role": user.role,
+        })
+    

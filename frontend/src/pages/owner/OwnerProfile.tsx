@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getProfile } from "../../services/profileService";
+import { getMyProfile } from "../../services/profileService";
 
 import PageHeader from "../../components/common/PageHeader";
 import ProfileCard from "../../components/attendant/profile/ProfileCard";
@@ -15,7 +15,7 @@ export default function OwnerProfile() {
   useEffect(() => {
     const loadProfile = async () => {
       try {
-        const data = await getProfile();
+        const data = await getMyProfile();
         setProfile(data);
       } catch (error) {
         console.error("Error loading profile:", error);
