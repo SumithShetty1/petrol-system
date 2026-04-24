@@ -14,7 +14,7 @@ type FormState = {
     last_name: string;
     username: string;
     password: string;
-    status: boolean;
+    is_active: boolean;
 };
 
 type Errors = Partial<Record<keyof FormState, string>>;
@@ -30,7 +30,7 @@ export default function EditAttendantModal({
         last_name: "",
         username: "",
         password: "",
-        status: true,
+        is_active: true,
     });
 
     const [errors, setErrors] = useState<Errors>({});
@@ -45,7 +45,7 @@ export default function EditAttendantModal({
                 last_name: attendant.last_name || "",
                 username: attendant.phone || "",
                 password: "",
-                status: attendant.status ?? true,
+                is_active: attendant.is_active ?? true,
             });
         }
     }, [attendant]);
@@ -109,7 +109,7 @@ export default function EditAttendantModal({
                 first_name: form.first_name,
                 last_name: form.last_name,
                 username: cleanUsername,
-                status: form.status,
+                is_active: form.is_active,
             };
 
             // Only send password if entered
@@ -158,7 +158,7 @@ export default function EditAttendantModal({
             last_name: "",
             username: "",
             password: "",
-            status: true,
+            is_active: true,
         });
         setErrors({});
         setApiError("");
@@ -321,7 +321,7 @@ export default function EditAttendantModal({
                                     Account Status
                                 </span>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    {form.status
+                                    {form.is_active
                                         ? "Attendant can log in"
                                         : "Account is disabled"}
                                 </p>
@@ -329,8 +329,8 @@ export default function EditAttendantModal({
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    name="status"
-                                    checked={form.status}
+                                    name="is_active"
+                                    checked={form.is_active}
                                     onChange={handleChange}
                                     className="sr-only peer"
                                 />

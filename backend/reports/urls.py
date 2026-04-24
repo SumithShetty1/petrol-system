@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    OwnerDashboardView,
     PumpDashboardView,
     MyAttendantDashboardView,
     AttendantDashboardDetailView
@@ -7,6 +8,8 @@ from .views import (
 
 urlpatterns = [
     path("pump/", PumpDashboardView.as_view()),
+
+    path("owner/", OwnerDashboardView.as_view()),
 
     # Logged-in attendant
     path("attendant/me/", MyAttendantDashboardView.as_view()),

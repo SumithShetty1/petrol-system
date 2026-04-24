@@ -20,5 +20,8 @@ class FuelRate(models.Model):
         ordering = ['-updated_at']
         
     def __str__(self):
-        return f"{self.pump.pump_name} | {self.fuel_type} | ₹{self.price_per_litre}/L"
-
+        return (
+            f"{self.pump.pump_name} ({self.pump.location}) | "
+            f"{self.get_fuel_type_display()} | "
+            f"₹{self.price_per_litre}/L"
+        )

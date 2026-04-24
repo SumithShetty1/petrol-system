@@ -20,6 +20,5 @@ class Employee(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        name = self.user.get_full_name() or self.user.username
-        return f"{name} - {self.pump.pump_name}"
-    
+        name = self.user.get_full_name().strip() or self.user.username
+        return f"{name} | {self.user.username} | {self.user.get_role_display()} | {self.pump.pump_name}"    

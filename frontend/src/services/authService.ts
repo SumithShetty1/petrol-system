@@ -17,7 +17,7 @@ export const createAttendant = async (data: {
   last_name: string;
   username: string;
   password: string;
-  status: boolean;
+  is_active: boolean;
 }) => {
   const res = await api.post("/auth/register/", {
     ...data,
@@ -34,7 +34,7 @@ export const updateAttendant = async (
     last_name: string;
     username: string;
     password?: string;
-    status: boolean;
+    is_active: boolean;
   }
 ) => {
   const res = await api.patch(`/auth/users/${id}/`, data);

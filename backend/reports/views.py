@@ -5,19 +5,67 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta, datetime
 
-from accounts.permissions import IsAdminOwnerManager
-from pumps.models import Pump
+from accounts.permissions import IsAttendant, IsManager, IsOwner
 from employees.models import Employee
 
 from .services import (
     pump_sales_summary,
-    attendant_sales_summary
+    attendant_sales_summary,
+    owner_sales_summary
 )
 
+class OwnerDashboardView(APIView):
+
+    permission_classes = [IsAuthenticated, IsOwner]
+
+    def get(self, request):
+
+        filter_type = request.query_params.get("range", "today")
+
+        end_date = timezone.localtime().date()
+
+        if filter_type == "today":
+            start_date = end_date
+
+        elif filter_type == "week":
+            start_date = end_date - timedelta(days=7)
+
+        elif filter_type == "month":
+            start_date = end_date - timedelta(days=30)
+
+        elif filter_type == "year":
+            start_date = end_date - timedelta(days=365)
+
+        elif filter_type == "custom":
+            try:
+                start_date = datetime.strptime(
+                    request.query_params.get("start_date"),
+                    "%Y-%m-%d"
+                ).date()
+
+                end_date = datetime.strptime(
+                    request.query_params.get("end_date"),
+                    "%Y-%m-%d"
+                ).date()
+
+            except:
+                return Response(
+                    {"error": "Invalid date format"},
+                    status=400
+                )
+
+        data = owner_sales_summary(
+            request.user,
+            start_date,
+            end_date
+        )
+
+        return Response(data)
+    
 
 class PumpDashboardView(APIView):
 
-    permission_classes = [IsAuthenticated, IsAdminOwnerManager]
+    permission_classes = [IsAuthenticated, IsManager]
 
     def get(self, request):
 
@@ -63,7 +111,7 @@ class PumpDashboardView(APIView):
 
 class MyAttendantDashboardView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [IsAuthenticated, IsAttendant]
 
     def get(self, request):
 
@@ -108,7 +156,7 @@ class MyAttendantDashboardView(APIView):
 
 class AttendantDashboardDetailView(APIView):
 
-    permission_classes = [IsAuthenticated, IsAdminOwnerManager]
+    permission_classes = [IsAuthenticated, IsManager]
 
     def get(self, request, attendant_id):
 

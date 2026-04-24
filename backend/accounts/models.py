@@ -10,12 +10,10 @@ class User(AbstractUser):
         ('attendant', 'Attendant'),
     )
 
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    status = models.BooleanField(default=True)
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="admin")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     
     def __str__(self):
-        name = self.get_full_name() or "Unnamed User"
-        return f"{name} ({self.role}) - {self.username}"
-    
+        name = self.get_full_name().strip() or "Unnamed User"
+        return f"{name} | {self.username} | {self.get_role_display()}"

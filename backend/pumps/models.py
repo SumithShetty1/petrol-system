@@ -27,5 +27,5 @@ class Pump(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"{self.pump_name} - {self.location}"
-    
+        owner = self.owner.get_full_name() if self.owner else "No Owner"
+        return f"{self.pump_name} | {self.location} | {owner}"

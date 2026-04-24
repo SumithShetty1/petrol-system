@@ -13,7 +13,7 @@ type FormState = {
     last_name: string;
     username: string;
     password: string;
-    status: boolean;
+    is_active: boolean;
 };
 
 type Errors = Partial<Record<keyof FormState, string>>;
@@ -28,7 +28,7 @@ export default function AddAttendantModal({
         last_name: "",
         username: "",
         password: "",
-        status: true,
+        is_active: true,
     });
 
     const [errors, setErrors] = useState<Errors>({});
@@ -134,7 +134,7 @@ export default function AddAttendantModal({
             last_name: "",
             username: "",
             password: "",
-            status: true,
+            is_active: true,
         });
         setErrors({});
         setApiError("");
@@ -286,14 +286,14 @@ export default function AddAttendantModal({
                             <div>
                                 <span className="text-sm font-medium text-gray-700">Account Status</span>
                                 <p className="text-xs text-gray-500 mt-0.5">
-                                    {form.status ? "Attendant can log in" : "Account is disabled"}
+                                    {form.is_active ? "Attendant can log in" : "Account is disabled"}
                                 </p>
                             </div>
                             <label className="relative inline-flex items-center cursor-pointer">
                                 <input
                                     type="checkbox"
-                                    name="status"
-                                    checked={form.status}
+                                    name="is_active"
+                                    checked={form.is_active}
                                     onChange={handleChange}
                                     className="sr-only peer"
                                 />

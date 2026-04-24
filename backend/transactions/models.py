@@ -100,5 +100,10 @@ class Transaction(models.Model):
     # -------------------------
 
     def __str__(self):
-        return f"{self.customer_name} | {self.fuel_type} | ₹{self.final_amount} | {self.pump_name}"
-    
+        return (
+            f"TXN#{self.id} | "
+            f"{self.pump_name} | "
+            f"{self.customer_name} | "
+            f"₹{self.final_amount} | "
+            f"{self.created_at:%d-%m-%Y %H:%M}"
+        )

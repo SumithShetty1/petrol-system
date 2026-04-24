@@ -1,3 +1,5 @@
+// src/routes/ProtectedRoute.tsx
+
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
@@ -33,7 +35,15 @@ export default function ProtectedRoute({
         return <Navigate to="/attendant/transaction" replace />;
       }
 
-      return <Navigate to="/manager/dashboard" replace />;
+      if (role === "manager") {
+        return <Navigate to="/manager/dashboard" replace />;
+      }
+
+      if (role === "owner") {
+        return <Navigate to="/owner/dashboard" replace />;
+      }
+
+      return <Navigate to="/" replace />;
     }
 
     return children;
