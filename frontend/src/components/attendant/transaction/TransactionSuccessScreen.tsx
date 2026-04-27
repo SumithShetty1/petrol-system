@@ -1,5 +1,5 @@
 import { CheckCircle } from "lucide-react";
-import PageHeader from "../../common/PageHeader";
+import PageHeader from "../../common/header/PageHeader";
 import SuccessDetailRow from "./SuccessDetailRow";
 
 type Props = {

@@ -7,6 +7,7 @@ class FuelRateAdmin(admin.ModelAdmin):
 
     list_display = (
         "id",
+        "pump_code",
         "pump_name",
         "pump_location",
         "fuel_type_display",
@@ -16,6 +17,7 @@ class FuelRateAdmin(admin.ModelAdmin):
     )
 
     search_fields = (
+        "pump__pump_code",
         "pump__pump_name",
         "pump__location",
     )
@@ -42,15 +44,21 @@ class FuelRateAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+    def pump_code(self, obj):
+        return obj.pump.pump_code if obj.pump else "—"
+    
+    pump_code.short_description = "Pump Code"
+    pump_code.admin_order_field = "pump__pump_code"
+    
     def pump_name(self, obj):
-        return obj.pump.pump_name
+        return obj.pump.pump_name if obj.pump else "—"
     
     pump_name.short_description = "Pump"
     pump_name.admin_order_field = "pump__pump_name"
 
 
     def pump_location(self, obj):
-        return obj.pump.location
+        return obj.pump.location if obj.pump else "—"
     
     pump_location.short_description = "Location"
     pump_location.admin_order_field = "pump__location"

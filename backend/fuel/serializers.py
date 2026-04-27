@@ -5,5 +5,17 @@ class FuelRateSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = FuelRate
-        fields = "__all__"
-        
+        fields = [
+            "id",
+            "pump",
+            "fuel_type",
+            "price_per_litre",
+            "created_at",
+            "updated_at",
+        ]
+
+        read_only_fields = [
+            "pump",
+            "created_at",
+            "updated_at",
+        ]

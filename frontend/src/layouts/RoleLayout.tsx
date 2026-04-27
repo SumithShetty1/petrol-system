@@ -3,6 +3,7 @@ import {
   attendantNav,
   managerNav,
   ownerNav,
+  adminNav
 } from "../config/navConfig";
 
 const roleConfig = {
@@ -18,6 +19,11 @@ const roleConfig = {
 
   owner: {
     navItems: ownerNav,
+    paddingBottom: "pb-20",
+  },
+
+  admin: {
+    navItems: adminNav,
     paddingBottom: "pb-20",
   },
 };

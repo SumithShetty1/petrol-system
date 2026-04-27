@@ -2,10 +2,10 @@ import { useState } from "react";
 import { User } from "lucide-react";
 import { getCustomerByMobile, getCustomerTransactions } from "../../services/customerService";
 
-import PageHeader from "../../components/common/PageHeader";
+import PageHeader from "../../components/common/header/PageHeader";
 import CustomerSearchCard from "../../components/manager/customers/CustomerSearchCard";
 import CustomerOverviewCard from "../../components/manager/customers/CustomerOverviewCard";
-import TransactionTable from "../../components/common/TransactionTable";
+import TransactionTable from "../../components/common/transaction/TransactionTable";
 
 export default function CustomerLookup() {
   const [phone, setPhone] = useState("");

@@ -1,20 +1,20 @@
 import { useEffect, useState } from "react";
 import { getDashboard } from "../../services/dashboardService";
-import { getProfile } from "../../services/profileService";
+import { getMyPump } from "../../services/pumpService";
 
-import PageHeader from "../../components/common/PageHeader";
-import DateFilterTabs from "../../components/common/DateFilterTabs";
-import DateRangePicker from "../../components/common/DateRangePicker";
-import TotalSalesCard from "../../components/manager/dashboard/TotalSalesCard";
-import FuelStatsCards from "../../components/manager/dashboard/FuelStatsCards";
-import CreditStatsCards from "../../components/manager/dashboard/CreditStatsCards";
-import OverallAnalytics from "../../components/manager/dashboard/OverallAnalytics";
+import PageHeader from "../../components/common/header/PageHeader";
+import DateFilterTabs from "../../components/common/dateFilter/DateFilterTabs";
+import DateRangePicker from "../../components/common/dateFilter/DateRangePicker";
+import TotalSalesCard from "../../components/common/dashboard/TotalSalesCard";
+import FuelStatsCards from "../../components/common/dashboard/FuelStatsCards";
+import CreditStatsCards from "../../components/common/dashboard/CreditStatsCards";
+import OverallAnalytics from "../../components/common/dashboard/OverallAnalytics";
 
 export type DateFilter = "today" | "week" | "month" | "year" | "custom";
 
 export default function PumpDashboard() {
   const [data, setData] = useState<any>(null);
-  const [profile, setProfile] = useState<any>(null);
+  const [pump, setPump] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
 
@@ -39,12 +39,12 @@ export default function PumpDashboard() {
   useEffect(() => {
     const loadInitialData = async () => {
       try {
-        const [profileData, dashboardData] = await Promise.all([
-          getProfile(),
+        const [myPumpData, dashboardData] = await Promise.all([
+          getMyPump(),
           getDashboard("today"),
         ]);
 
-        setProfile(profileData);
+        setPump(myPumpData);
         setData(dashboardData);
       } catch (error) {
         console.error("Dashboard error:", error);
@@ -89,7 +89,7 @@ export default function PumpDashboard() {
     );
   }
 
-  if (!data || !profile) {
+  if (!data || !pump) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">No dashboard data available</div>
@@ -112,7 +112,7 @@ export default function PumpDashboard() {
       {/* Header */}
       <PageHeader
         title="Pump Dashboard"
-        subtitle={`${profile.pump_name} - ${profile.location || ""}`}
+        subtitle={`${pump.pump_name} - ${pump.location || ""}`}
       />
 
       {/* Date Filter */}

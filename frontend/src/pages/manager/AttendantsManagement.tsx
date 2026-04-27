@@ -1,43 +1,91 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
-import { getAttendants } from "../../services/employeeService";
-import { getAttendantDashboardById } from "../../services/dashboardService";
+import {
+  getAttendants,
+  getEmployeeById,
+} from "../../services/employeeService";
 
-import PageHeader from "../../components/common/PageHeader";
-import AttendantsList from "../../components/manager/attendants/AttendantsList";
+import {
+  getAttendantDashboardByPhone,
+} from "../../services/dashboardService";
+
+import PageHeader from "../../components/common/header/PageHeader";
+import PeopleList from "../../components/common/peopleList/PeopleList";
 import AttendantProfileView from "../../components/manager/attendants/AttendantProfileView";
-import AddAttendantModal from "../../components/modals/AddAttendantModal";
-import EditAttendantModal from "../../components/modals/EditAttendantModal";
-import DeleteAttendantModal from "../../components/modals/DeleteAttendantModal";
 
-export type DateFilter = "today" | "week" | "month" | "year" | "custom";
+import AddUserModal from "../../components/modals/AddUserModal";
+import EditUserModal from "../../components/modals/EditUserModal";
+import DeleteUserModal from "../../components/modals/DeleteUserModal";
+
+import { createAttendant, deleteUser, updateUser } from "../../services/authService";
+
+export type DateFilter =
+  | "today"
+  | "week"
+  | "month"
+  | "year"
+  | "custom";
 
 export default function AttendantsManagement() {
-  const [attendants, setAttendants] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [attendants, setAttendants] =
+    useState<any[]>([]);
 
-  // Selected attendant state
-  const [selectedAttendant, setSelectedAttendant] = useState<any>(null);
-  const [attendantStats, setAttendantStats] = useState<any>(null);
+  const [loading, setLoading] =
+    useState(true);
 
-  // Date filter for attendant profile
-  const [dateFilter, setDateFilter] = useState<DateFilter>("today");
-  const [showCustomDatePicker, setShowCustomDatePicker] = useState(false);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [profileLoading, setProfileLoading] =
+    useState(false);
 
-  // Modal states
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [editModal, setEditModal] = useState(false);
-  const [deleteModal, setDeleteModal] = useState(false);
-  const [editAttendant, setEditAttendant] = useState<any>(null);
-  const [deleteAttendantData, setDeleteAttendantData] = useState<any>(null);
+  const [
+    selectedAttendant,
+    setSelectedAttendant,
+  ] = useState<any>(null);
 
+  const [attendantStats, setAttendantStats] =
+    useState<any>(null);
+
+  const [dateFilter, setDateFilter] =
+    useState<DateFilter>("today");
+
+  const [
+    showCustomDatePicker,
+    setShowCustomDatePicker,
+  ] = useState(false);
+
+  const [startDate, setStartDate] =
+    useState("");
+
+  const [endDate, setEndDate] =
+    useState("");
+
+  const [showAddModal, setShowAddModal] =
+    useState(false);
+
+  const [editModal, setEditModal] =
+    useState(false);
+
+  const [deleteModal, setDeleteModal] =
+    useState(false);
+
+  const [editAttendant, setEditAttendant] =
+    useState<any>(null);
+
+  const [
+    deleteAttendantData,
+    setDeleteAttendantData,
+  ] = useState<any>(null);
+
+  // -----------------------------------
+  // LOAD ATTENDANTS
+  // -----------------------------------
   const loadAttendants = async () => {
-    setLoading(true);
     try {
-      const data = await getAttendants();
+      setLoading(true);
+
+      const data =
+        await getAttendants();
+
       setAttendants(data);
     } catch (error) {
       console.error(error);
@@ -50,102 +98,261 @@ export default function AttendantsManagement() {
     loadAttendants();
   }, []);
 
+  // -----------------------------------
+  // FETCH DASHBOARD USING PHONE
+  // -----------------------------------
   const fetchStats = async (
-    attendantId: number,
+    phone: string,
     range: DateFilter,
     start?: string,
     end?: string
   ) => {
     try {
-      const stats = await getAttendantDashboardById(attendantId, range, start, end);
+      const stats =
+        await getAttendantDashboardByPhone(
+          phone,
+          range,
+          start,
+          end
+        );
+
       setAttendantStats(stats);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const loadAttendantDetails = async (attendant: any) => {
-    setSelectedAttendant(attendant);
-    setDateFilter("today");
-    setStartDate("");
-    setEndDate("");
-    setShowCustomDatePicker(false);
-    await fetchStats(attendant.id, "today");
-  };
+  // -----------------------------------
+  // OPEN PROFILE
+  // -----------------------------------
+  const loadAttendantDetails =
+    async (attendant: any) => {
+      try {
+        setProfileLoading(true);
 
-  const handleFilterChange = async (filter: DateFilter) => {
-    if (!selectedAttendant) return;
-    setDateFilter(filter);
+        const fullProfile =
+          await getEmployeeById(
+            attendant.id
+          );
 
-    if (filter === "custom") {
-      setShowCustomDatePicker(true);
-    } else {
-      setShowCustomDatePicker(false);
-      await fetchStats(selectedAttendant.id, filter);
-    }
-  };
+        setSelectedAttendant(
+          fullProfile
+        );
 
-  const handleCustomDateSubmit = async () => {
-    if (!selectedAttendant || !startDate || !endDate) return;
-    await fetchStats(selectedAttendant.id, "custom", startDate, endDate);
-    setShowCustomDatePicker(false);
-  };
+        setDateFilter("today");
+        setStartDate("");
+        setEndDate("");
+        setShowCustomDatePicker(
+          false
+        );
 
-  const handleBackToList = () => {
-    setSelectedAttendant(null);
-    setDateFilter("today");
-    setStartDate("");
-    setEndDate("");
-    setShowCustomDatePicker(false);
-  };
+        await fetchStats(
+          attendant.phone,
+          "today"
+        );
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setProfileLoading(false);
+      }
+    };
 
-  const handleEditClick = (attendant: any) => {
-    setEditAttendant(attendant);
-    setEditModal(true);
-  };
+  // -----------------------------------
+  // FILTER CHANGE
+  // -----------------------------------
+  const handleFilterChange =
+    async (
+      filter: DateFilter
+    ) => {
+      if (
+        !selectedAttendant
+      ) return;
 
-  const handleDeleteClick = (attendant: any) => {
-    setDeleteAttendantData(attendant);
-    setDeleteModal(true);
-  };
+      setDateFilter(filter);
 
+      if (
+        filter ===
+        "custom"
+      ) {
+        setShowCustomDatePicker(
+          true
+        );
+        return;
+      }
+
+      setShowCustomDatePicker(
+        false
+      );
+
+      await fetchStats(
+        selectedAttendant.phone,
+        filter
+      );
+    };
+
+  // -----------------------------------
+  // CUSTOM DATE SUBMIT
+  // -----------------------------------
+  const handleCustomDateSubmit =
+    async () => {
+      if (
+        !selectedAttendant ||
+        !startDate ||
+        !endDate
+      ) {
+        return;
+      }
+
+      await fetchStats(
+        selectedAttendant.phone,
+        "custom",
+        startDate,
+        endDate
+      );
+
+      setShowCustomDatePicker(
+        false
+      );
+    };
+
+  // -----------------------------------
+  // BACK
+  // -----------------------------------
+  const handleBackToList =
+    () => {
+      setSelectedAttendant(
+        null
+      );
+
+      setAttendantStats(
+        null
+      );
+
+      setDateFilter("today");
+      setStartDate("");
+      setEndDate("");
+
+      setShowCustomDatePicker(
+        false
+      );
+    };
+
+  // -----------------------------------
+  // EDIT
+  // -----------------------------------
+  const handleEditClick =
+    (
+      attendant: any
+    ) => {
+      setEditAttendant(
+        attendant
+      );
+
+      setEditModal(true);
+    };
+
+  // -----------------------------------
+  // DELETE
+  // -----------------------------------
+  const handleDeleteClick =
+    (
+      attendant: any
+    ) => {
+      setDeleteAttendantData(
+        attendant
+      );
+
+      setDeleteModal(true);
+    };
+
+  // -----------------------------------
+  // LOADING
+  // -----------------------------------
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading attendants...</div>
+        <div className="text-gray-500">
+          Loading attendants...
+        </div>
       </div>
     );
   }
 
-  // Attendant Profile View
-  if (selectedAttendant) {
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">
+          Loading profile...
+        </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // PROFILE VIEW
+  // -----------------------------------
+  if (
+    selectedAttendant
+  ) {
     return (
       <AttendantProfileView
-        attendant={selectedAttendant}
-        stats={attendantStats}
-        dateFilter={dateFilter}
-        showCustomDatePicker={showCustomDatePicker}
-        startDate={startDate}
-        endDate={endDate}
-        onBack={handleBackToList}
-        onFilterChange={handleFilterChange}
-        onStartDateChange={setStartDate}
-        onEndDateChange={setEndDate}
-        onCustomDateSubmit={handleCustomDateSubmit}
-        onCancelCustomDate={() => setShowCustomDatePicker(false)}
+        attendant={
+          selectedAttendant
+        }
+        stats={
+          attendantStats
+        }
+        dateFilter={
+          dateFilter
+        }
+        showCustomDatePicker={
+          showCustomDatePicker
+        }
+        startDate={
+          startDate
+        }
+        endDate={
+          endDate
+        }
+        onBack={
+          handleBackToList
+        }
+        onFilterChange={
+          handleFilterChange
+        }
+        onStartDateChange={
+          setStartDate
+        }
+        onEndDateChange={
+          setEndDate
+        }
+        onCustomDateSubmit={
+          handleCustomDateSubmit
+        }
+        onCancelCustomDate={() =>
+          setShowCustomDatePicker(
+            false
+          )
+        }
       />
     );
   }
 
-  // Attendants List View
+  // -----------------------------------
+  // LIST VIEW
+  // -----------------------------------
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <PageHeader
         title="Attendants"
-        subtitle={`${attendants.length} attendant`}
+        subtitle={`${attendants.length} attendant${attendants.length !== 1 ? "s" : ""}`}
         rightAction={
           <button
-            onClick={() => setShowAddModal(true)}
+            onClick={() =>
+              setShowAddModal(
+                true
+              )
+            }
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-md hover:bg-gray-100 transition-colors"
           >
             <Plus className="w-5 h-5" />
@@ -153,31 +360,77 @@ export default function AttendantsManagement() {
         }
       />
 
-      <AttendantsList
-        attendants={attendants}
-        onSelectAttendant={loadAttendantDetails}
-        onEdit={handleEditClick}
-        onDelete={handleDeleteClick}
+      <PeopleList
+        users={attendants.map(
+          (item) => ({
+            ...item,
+            subtitle:
+              item.pump_name ||
+              "—",
+          })
+        )}
+        emptyText="No attendants found"
+        onSelect={
+          loadAttendantDetails
+        }
+        onEdit={
+          handleEditClick
+        }
+        onDelete={
+          handleDeleteClick
+        }
       />
 
-      <AddAttendantModal
-        isOpen={showAddModal}
-        onClose={() => setShowAddModal(false)}
-        onSuccess={loadAttendants}
+      <AddUserModal
+        isOpen={
+          showAddModal
+        }
+        onClose={() =>
+          setShowAddModal(
+            false
+          )
+        }
+        onSuccess={
+          loadAttendants
+        }
+        role="attendant"
+        onSubmit={
+          createAttendant
+        }
       />
 
-      <EditAttendantModal
+      <EditUserModal
         isOpen={editModal}
-        onClose={() => setEditModal(false)}
+        onClose={() => {
+          setEditModal(false);
+          setEditAttendant(null);
+        }}
         onSuccess={loadAttendants}
-        attendant={editAttendant}
+        role="attendant"
+        user={editAttendant}
+        onSubmit={updateUser}
       />
 
-      <DeleteAttendantModal
-        isOpen={deleteModal}
-        onClose={() => setDeleteModal(false)}
-        onSuccess={loadAttendants}
-        attendant={deleteAttendantData}
+      <DeleteUserModal
+        isOpen={
+          deleteModal
+        }
+        onClose={() => {
+          setDeleteModal(
+            false
+          );
+          setDeleteAttendantData(
+            null
+          );
+        }}
+        onSuccess={
+          loadAttendants
+        }
+        role="attendant"
+        user={
+          deleteAttendantData
+        }
+        onSubmit={deleteUser}
       />
     </div>
   );

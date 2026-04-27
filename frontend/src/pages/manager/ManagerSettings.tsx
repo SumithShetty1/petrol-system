@@ -5,7 +5,7 @@ import { getProfile } from "../../services/profileService";
 import { getFuelRates, updateFuelRate } from "../../services/fuelService";
 import { useAuth } from "../../context/AuthContext";
 
-import PageHeader from "../../components/common/PageHeader";
+import PageHeader from "../../components/common/header/PageHeader";
 import AccountSection from "../../components/manager/settings/AccountSection";
 import FuelPriceSettings from "../../components/manager/settings/FuelPriceSettings";
 

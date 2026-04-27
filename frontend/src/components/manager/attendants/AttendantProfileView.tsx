@@ -1,6 +1,6 @@
-import PageHeader from "../../common/PageHeader";
-import ProfileCard from "../../attendant/profile/ProfileCard";
-import PerformanceDashboard from "../../attendant/profile/PerformanceDashboard";
+import PageHeader from "../../common/header/PageHeader";
+import ProfileCard from "../../common/profile/ProfileCard";
+import PerformanceDashboard from "../../common/performance/PerformanceDashboard";
 import type { DateFilter } from "../../../pages/manager/AttendantsManagement";
 
 type Props = {
@@ -40,7 +40,11 @@ export default function AttendantProfileView({
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
             <div className="lg:col-span-1">
-              <ProfileCard profile={attendant} showLogout={false} />
+              <ProfileCard
+                profile={attendant}
+                showLogout={false}
+                showManagerInfo={true}
+              />
             </div>
 
             <div className="lg:col-span-2">

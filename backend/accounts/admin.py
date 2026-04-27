@@ -15,6 +15,8 @@ class CustomUserAdmin(UserAdmin):
         "role",
         "is_active",
         "is_staff",
+        "is_superuser",
+        "created_at",
     )
 
     list_filter = ("role", "is_active", "is_staff", "is_superuser")
@@ -23,16 +25,23 @@ class CustomUserAdmin(UserAdmin):
 
     ordering = ("-id",)
 
-    readonly_fields = ("last_login", "date_joined")
+    readonly_fields = ("last_login", "date_joined", "created_at", "updated_at",)
     
     list_per_page = 25
 
-    date_hierarchy = "date_joined"
+    date_hierarchy = "created_at"
 
     fieldsets = UserAdmin.fieldsets + (
-        ("Custom Fields", {
-            "fields": ("role",),
-        }),
+        (
+            "Custom Fields",
+            {
+                "fields": (
+                    "role",
+                    "created_at",
+                    "updated_at",
+                ),
+            },
+        ),
     )
 
     add_fieldsets = UserAdmin.add_fieldsets + (

@@ -6,7 +6,6 @@ import {
   FileText,
   Search,
   Settings,
-  Fuel,
   Building2,
 } from "lucide-react";
 
@@ -63,6 +62,11 @@ export const ownerNav = [
     icon: Building2,
   },
   {
+    label: "Managers",
+    path: "/owner/managers",
+    icon: Users,
+  },
+  {
     label: "Transactions",
     path: "/owner/transactions",
     icon: FileText,
@@ -70,6 +74,34 @@ export const ownerNav = [
   {
     label: "Profile",
     path: "/owner/profile",
+    icon: User,
+  },
+];
+
+export const adminNav = [
+  {
+    label: "Dashboard",
+    path: "/admin/dashboard",
+    icon: LayoutDashboard,
+  },
+  {
+    label: "Pumps",
+    path: "/admin/pumps",
+    icon: Building2,
+  },
+  {
+    label: "Owners",
+    path: "/admin/owners",
+    icon: Users,
+  },
+  {
+    label: "Transactions",
+    path: "/admin/transactions",
+    icon: FileText,
+  },
+  {
+    label: "Users",
+    path: "/admin/users",
     icon: User,
   },
 ];

@@ -43,6 +43,10 @@ export default function ProtectedRoute({
         return <Navigate to="/owner/dashboard" replace />;
       }
 
+      if (role === "admin") {
+        return <Navigate to="/admin/dashboard" replace />;
+      }
+
       return <Navigate to="/" replace />;
     }
 

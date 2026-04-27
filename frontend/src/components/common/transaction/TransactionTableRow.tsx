@@ -33,9 +33,8 @@ export default function TransactionTableRow({
 
   return (
     <tr
-      className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${
-        index % 2 === 0 ? "bg-white" : "bg-gray-50"
-      }`}
+      className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
+        }`}
     >
       <td className="px-3 py-3 text-center text-xs">{index + 1}</td>
 
@@ -50,14 +49,12 @@ export default function TransactionTableRow({
       <td className="px-3 py-3 whitespace-nowrap">
         <div className="flex items-center gap-1">
           <Droplet
-            className={`w-3 h-3 ${
-              isPetrol ? "text-blue-500" : "text-orange-500"
-            }`}
+            className={`w-3 h-3 ${isPetrol ? "text-blue-500" : "text-orange-500"
+              }`}
           />
           <span
-            className={`text-xs font-medium ${
-              isPetrol ? "text-blue-700" : "text-orange-700"
-            }`}
+            className={`text-xs font-medium ${isPetrol ? "text-blue-700" : "text-orange-700"
+              }`}
           >
             {isPetrol ? "Petrol" : "Diesel"}
           </span>
@@ -90,6 +87,10 @@ export default function TransactionTableRow({
 
       <td className="px-3 py-3 text-right text-xs font-medium whitespace-nowrap">
         ₹{parseFloat(transaction.final_amount || 0).toFixed(2)}
+      </td>
+
+      <td className="px-3 py-3 text-xs font-medium whitespace-nowrap text-indigo-600">
+        {transaction.pump_code || "—"}
       </td>
 
       <td className="px-3 py-3 text-xs whitespace-nowrap">

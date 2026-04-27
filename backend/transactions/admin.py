@@ -10,7 +10,8 @@ class TransactionAdmin(admin.ModelAdmin):
     
         "customer_name",
         "customer_mobile",
-    
+
+        "pump_code",
         "pump_name",
         "pump_location",
     
@@ -36,6 +37,7 @@ class TransactionAdmin(admin.ModelAdmin):
     search_fields = (
         "customer_name",
         "customer_mobile",
+        "pump_code",
         "pump_name",
         "pump_location",
         "attendant_name",
@@ -80,6 +82,7 @@ class TransactionAdmin(admin.ModelAdmin):
         "customer_name",
         "customer_mobile",
 
+        "pump_code",
         "pump_name",
         "pump_location",
 
@@ -121,6 +124,7 @@ class TransactionAdmin(admin.ModelAdmin):
 
         ("Pump Snapshot", {
             "fields": (
+                "pump_code",
                 "pump_name",
                 "pump_location",
             )

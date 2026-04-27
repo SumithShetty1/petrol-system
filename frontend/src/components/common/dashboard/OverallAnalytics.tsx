@@ -6,6 +6,7 @@ type Props = {
   dieselQuantity: number;
   creditsEarned: number;
   creditsRedeemed: number;
+  compact?: boolean;
 };
 
 export default function OverallAnalytics({
@@ -14,11 +15,12 @@ export default function OverallAnalytics({
   dieselQuantity,
   creditsEarned,
   creditsRedeemed,
+  compact = false,
 }: Props) {
   const netActiveCredits = creditsEarned - creditsRedeemed;
 
   return (
-    <div className="px-6 mt-6">
+    <div className={compact ? "mt-4" : "px-6 mt-6"}>
       <div className="bg-white rounded-2xl p-5 shadow-md">
         <h2 className="text-gray-900 mb-4 font-semibold">Overall Analytics</h2>
 

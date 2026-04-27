@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../context/AuthContext";
+
 import { getMyProfile } from "../../services/profileService";
 
-import PageHeader from "../../components/common/PageHeader";
-import ProfileCard from "../../components/attendant/profile/ProfileCard";
+import PageHeader from "../../components/common/header/PageHeader";
+import ProfileCard from "../../components/common/profile/ProfileCard";
+
 
 export default function OwnerProfile() {
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<any>(null);
@@ -28,8 +32,7 @@ export default function OwnerProfile() {
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
+    logout();
     navigate("/");
   };
 
@@ -63,6 +66,7 @@ export default function OwnerProfile() {
             profile={profile}
             onLogout={handleLogout}
             showLogout={true}
+            showManagerInfo={false}
           />
         </div>
       </div>

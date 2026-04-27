@@ -10,6 +10,7 @@ class CustomerAdmin(admin.ModelAdmin):
         "mobile_number",
         "total_points",
         "created_at",
+        "updated_at",
     )
 
     search_fields = (
@@ -19,6 +20,7 @@ class CustomerAdmin(admin.ModelAdmin):
 
     list_filter = (
         "created_at",
+        "updated_at",
     )
 
     ordering = ("-created_at",)
@@ -30,6 +32,7 @@ class CustomerAdmin(admin.ModelAdmin):
     readonly_fields = (
         "total_points",
         "created_at",
+        "updated_at",
     )
 
 
@@ -39,6 +42,7 @@ class PointsHistoryAdmin(admin.ModelAdmin):
         "id",
         "customer_name",
         "customer_mobile",
+        "transaction",
         "type",
         "points_change",
         "balance_after",

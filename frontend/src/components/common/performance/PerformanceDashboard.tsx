@@ -1,6 +1,6 @@
 import { BarChart3 } from "lucide-react";
-import DateFilterTabs from "../../common/DateFilterTabs";
-import DateRangePicker from "../../common/DateRangePicker";
+import DateFilterTabs from "../dateFilter/DateFilterTabs";
+import DateRangePicker from "../dateFilter/DateRangePicker";
 import PetrolCard from "./PetrolCard";
 import DieselCard from "./DieselCard";
 import TotalSalesCard from "./TotalSalesCard";

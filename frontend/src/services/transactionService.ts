@@ -34,3 +34,36 @@ export const getTransactions = async (
   const res = await api.get(url);
   return res.data;
 };
+
+
+export const getOwnerTransactions = async (
+  range: string,
+  startDate?: string,
+  endDate?: string,
+  pumpId?: string,
+  fuelType?: string
+) => {
+  let url = `/transactions/?range=${range}`;
+
+  if (pumpId && pumpId !== "all") {
+    url += `&pump=${pumpId}`;
+  }
+
+  if (
+    fuelType &&
+    fuelType !== "all"
+  ) {
+    url += `&fuel=${fuelType}`;
+  }
+
+  if (
+    range === "custom" &&
+    startDate &&
+    endDate
+  ) {
+    url += `&start_date=${startDate}&end_date=${endDate}`;
+  }
+
+  const res = await api.get(url);
+  return res.data;
+};

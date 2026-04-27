@@ -1,16 +1,19 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "../../context/AuthContext";
+
 import { getProfile } from "../../services/profileService";
 import { getAttendantDashboard } from "../../services/dashboardService";
 
-import PageHeader from "../../components/common/PageHeader";
-import ProfileCard from "../../components/attendant/profile/ProfileCard";
-import PerformanceDashboard from "../../components/attendant/profile/PerformanceDashboard";
+import PageHeader from "../../components/common/header/PageHeader";
+import ProfileCard from "../../components/common/profile/ProfileCard";
+import PerformanceDashboard from "../../components/common/performance/PerformanceDashboard";
 
 export type DateFilter = "today" | "week" | "month" | "year" | "custom";
 
 export default function Profile() {
+  const { logout } = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<any>(null);
@@ -74,8 +77,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
+    logout();
     navigate("/");
   };
 
@@ -105,7 +107,7 @@ export default function Profile() {
 
             {/* Profile Card - Left Column */}
             <div className="lg:col-span-1">
-              <ProfileCard profile={profile} onLogout={handleLogout} showLogout={true} />
+              <ProfileCard profile={profile} onLogout={handleLogout} showLogout={true} showManagerInfo={true} />
             </div>
 
             {/* Performance Dashboard - Right Column */}

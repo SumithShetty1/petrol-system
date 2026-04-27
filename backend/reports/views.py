@@ -1,12 +1,20 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+
 from datetime import timedelta, datetime
 
-from accounts.permissions import IsAttendant, IsManager, IsOwner
+from accounts.permissions import (
+    IsAttendant,
+    IsManager,
+    IsOwner
+)
+
 from employees.models import Employee
+from pumps.models import Pump
 
 from .services import (
     pump_sales_summary,
@@ -14,45 +22,83 @@ from .services import (
     owner_sales_summary
 )
 
+
+# -----------------------------------
+# SHARED DATE RANGE HELPER
+# -----------------------------------
+def get_date_range(request):
+
+    filter_type = request.query_params.get(
+        "range",
+        "today"
+    )
+
+    end_date = timezone.localtime().date()
+
+    if filter_type == "today":
+        start_date = end_date
+
+    elif filter_type == "week":
+        start_date = end_date - timedelta(days=7)
+
+    elif filter_type == "month":
+        start_date = end_date - timedelta(days=30)
+
+    elif filter_type == "year":
+        start_date = end_date - timedelta(days=365)
+
+    elif filter_type == "custom":
+        try:
+            start_date = datetime.strptime(
+                request.query_params.get(
+                    "start_date"
+                ),
+                "%Y-%m-%d"
+            ).date()
+
+            end_date = datetime.strptime(
+                request.query_params.get(
+                    "end_date"
+                ),
+                "%Y-%m-%d"
+            ).date()
+
+        except ValueError:
+            return None, None
+        
+        if start_date > end_date:
+            return None, None
+
+    else:
+        start_date = end_date
+
+    return start_date, end_date
+
+
+# -----------------------------------
+# OWNER OVERALL DASHBOARD
+# -----------------------------------
 class OwnerDashboardView(APIView):
 
-    permission_classes = [IsAuthenticated, IsOwner]
+    permission_classes = [
+        IsAuthenticated,
+        IsOwner
+    ]
 
     def get(self, request):
 
-        filter_type = request.query_params.get("range", "today")
+        start_date, end_date = get_date_range(
+            request
+        )
 
-        end_date = timezone.localtime().date()
-
-        if filter_type == "today":
-            start_date = end_date
-
-        elif filter_type == "week":
-            start_date = end_date - timedelta(days=7)
-
-        elif filter_type == "month":
-            start_date = end_date - timedelta(days=30)
-
-        elif filter_type == "year":
-            start_date = end_date - timedelta(days=365)
-
-        elif filter_type == "custom":
-            try:
-                start_date = datetime.strptime(
-                    request.query_params.get("start_date"),
-                    "%Y-%m-%d"
-                ).date()
-
-                end_date = datetime.strptime(
-                    request.query_params.get("end_date"),
-                    "%Y-%m-%d"
-                ).date()
-
-            except:
-                return Response(
-                    {"error": "Invalid date format"},
-                    status=400
-                )
+        if start_date is None:
+            return Response(
+                {
+                    "error":
+                    "Invalid date format"
+                },
+                status=400
+            )
 
         data = owner_sales_summary(
             request.user,
@@ -61,150 +107,236 @@ class OwnerDashboardView(APIView):
         )
 
         return Response(data)
-    
 
+
+# -----------------------------------
+# OWNER SINGLE PUMP DASHBOARD
+# Uses pump_code
+# -----------------------------------
+class OwnerPumpDetailDashboardView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsOwner
+    ]
+
+    def get(
+        self,
+        request,
+        pump_code
+    ):
+
+        pump = get_object_or_404(
+            Pump,
+            pump_code=pump_code,
+            owner=request.user
+        )
+
+        start_date, end_date = get_date_range(
+            request
+        )
+
+        if start_date is None:
+            return Response(
+                {
+                    "error":
+                    "Invalid date format"
+                },
+                status=400
+            )
+
+        data = pump_sales_summary(
+            pump,
+            start_date,
+            end_date
+        )
+
+        return Response(data)
+
+
+# -----------------------------------
+# MANAGER PUMP DASHBOARD
+# Uses assigned pump_code internally
+# -----------------------------------
 class PumpDashboardView(APIView):
 
-    permission_classes = [IsAuthenticated, IsManager]
+    permission_classes = [
+        IsAuthenticated,
+        IsManager
+    ]
 
     def get(self, request):
 
-        employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+        employee = Employee.objects.select_related(
+            "pump"
+        ).filter(
+            user=request.user
+        ).first()
 
         if not employee:
-            return Response({"error": "Employee not found"}, status=404)
+            return Response(
+                {
+                    "error":
+                    "Employee not found"
+                },
+                status=404
+            )
 
-        pump = employee.pump
+        if not employee.pump:
+            return Response(
+                {
+                    "error":
+                    "Pump not assigned"
+                },
+                status=404
+            )
 
-        filter_type = request.query_params.get("range", "today")
+        start_date, end_date = get_date_range(
+            request
+        )
 
-        end_date = timezone.localtime().date()
+        if start_date is None:
+            return Response(
+                {
+                    "error":
+                    "Invalid date format"
+                },
+                status=400
+            )
 
-        if filter_type == "today":
-            start_date = end_date
-
-        elif filter_type == "week":
-            start_date = end_date - timedelta(days=7)
-
-        elif filter_type == "month":
-            start_date = end_date - timedelta(days=30)
-
-        elif filter_type == "year":
-            start_date = end_date - timedelta(days=365)
-
-        elif filter_type == "custom":
-            try:
-                start_date = datetime.strptime(
-                    request.query_params.get("start_date"), "%Y-%m-%d"
-                ).date()
-
-                end_date = datetime.strptime(
-                    request.query_params.get("end_date"), "%Y-%m-%d"
-                ).date()
-            except:
-                return Response({"error": "Invalid date format"}, status=400)
-
-        data = pump_sales_summary(pump, start_date, end_date)
+        data = pump_sales_summary(
+            employee.pump,
+            start_date,
+            end_date
+        )
 
         return Response(data)
-    
 
-class MyAttendantDashboardView(APIView):
 
-    permission_classes = [IsAuthenticated, IsAttendant]
+# -----------------------------------
+# ATTENDANT SELF DASHBOARD
+# Uses attendant_phone internally
+# -----------------------------------
+class MyAttendantDashboardView(
+    APIView
+):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsAttendant
+    ]
 
     def get(self, request):
 
-        employee = Employee.objects.filter(user=request.user).first()
+        employee = Employee.objects.select_related(
+            "user"
+        ).filter(
+            user=request.user
+        ).first()
 
         if not employee:
-            return Response({"error": "Employee not found"}, status=404)
+            return Response(
+                {
+                    "error":
+                    "Employee not found"
+                },
+                status=404
+            )
 
-        filter_type = request.query_params.get("range", "today")
+        start_date, end_date = get_date_range(
+            request
+        )
 
-        start_date = None
-        end_date = timezone.localtime().date()
+        if start_date is None:
+            return Response(
+                {
+                    "error":
+                    "Invalid date format"
+                },
+                status=400
+            )
 
-        if filter_type == "today":
-            start_date = end_date
-
-        elif filter_type == "week":
-            start_date = end_date - timedelta(days=7)
-
-        elif filter_type == "month":
-            start_date = end_date - timedelta(days=30)
-
-        elif filter_type == "year":
-            start_date = end_date - timedelta(days=365)
-
-        elif filter_type == "custom":
-            try:
-                start_date = datetime.strptime(
-                    request.query_params.get("start_date"), "%Y-%m-%d"
-                ).date()
-
-                end_date = datetime.strptime(
-                    request.query_params.get("end_date"), "%Y-%m-%d"
-                ).date()
-            except:
-                return Response({"error": "Invalid date format"}, status=400)
-            
-        data = attendant_sales_summary(employee, start_date, end_date)
+        data = attendant_sales_summary(
+            employee,
+            start_date,
+            end_date
+        )
 
         return Response(data)
-    
 
-class AttendantDashboardDetailView(APIView):
 
-    permission_classes = [IsAuthenticated, IsManager]
+# -----------------------------------
+# MANAGER VIEW ATTENDANT DASHBOARD
+# Uses phone number instead of id
+# -----------------------------------
+class AttendantDashboardDetailView(
+    APIView
+):
 
-    def get(self, request, attendant_id):
+    permission_classes = [
+        IsAuthenticated,
+        IsManager
+    ]
 
-        # Get manager's employee record
-        manager_employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+    def get(
+        self,
+        request,
+        phone
+    ):
+
+        manager_employee = Employee.objects.select_related(
+            "pump"
+        ).filter(
+            user=request.user
+        ).first()
 
         if not manager_employee:
-            return Response({"error": "Manager not found"}, status=404)
+            return Response(
+                {
+                    "error":
+                    "Manager not found"
+                },
+                status=404
+            )
 
-        # Get requested attendant
         attendant = get_object_or_404(
-            Employee.objects.select_related("pump", "user"),
-            id=attendant_id,
+            Employee.objects.select_related(
+                "pump",
+                "user"
+            ),
+            user__username=phone,
             user__role="attendant"
         )
 
         if attendant.pump != manager_employee.pump:
-            return Response({"error": "Unauthorized"}, status=403)
+            return Response(
+                {
+                    "error":
+                    "Unauthorized"
+                },
+                status=403
+            )
 
-        filter_type = request.query_params.get("range", "today")
+        start_date, end_date = get_date_range(
+            request
+        )
 
-        end_date = timezone.localtime().date()
+        if start_date is None:
+            return Response(
+                {
+                    "error":
+                    "Invalid date format"
+                },
+                status=400
+            )
 
-        if filter_type == "today":
-            start_date = end_date
-
-        elif filter_type == "week":
-            start_date = end_date - timedelta(days=7)
-
-        elif filter_type == "month":
-            start_date = end_date - timedelta(days=30)
-
-        elif filter_type == "year":
-            start_date = end_date - timedelta(days=365)
-
-        elif filter_type == "custom":
-            try:
-                start_date = datetime.strptime(
-                    request.query_params.get("start_date"), "%Y-%m-%d"
-                ).date()
-
-                end_date = datetime.strptime(
-                    request.query_params.get("end_date"), "%Y-%m-%d"
-                ).date()
-            except:
-                return Response({"error": "Invalid date format"}, status=400)
-
-        data = attendant_sales_summary(attendant, start_date, end_date)
+        data = attendant_sales_summary(
+            attendant,
+            start_date,
+            end_date
+        )
 
         return Response(data)
     

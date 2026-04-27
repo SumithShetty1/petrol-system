@@ -8,7 +8,10 @@ export const fetchCustomer = async (mobile: string) => {
 };
 
 export const getCustomerTransactions = async (phone: string) => {
-  const res = await api.get(`/transactions/?customer_mobile=${phone}`);
+  const res = await api.get(
+    `/transactions/?customer_mobile=${phone}&range=all`
+  );
+
   return res.data;
 };
 

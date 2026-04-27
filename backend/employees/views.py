@@ -3,97 +3,192 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 
-from accounts.permissions import IsAdminOwnerManager
+from accounts.permissions import (
+    IsAdminOwnerManager,
+    IsAdminOrOwner,
+    IsManagerOrAttendant,
+)
 
 from .models import Employee
-from .serializers import EmployeeSerializer
+
+from .serializers import (
+    EmployeeListSerializer,
+    EmployeeProfileSerializer,
+)
 
 
-# -------------------------------
-# Employee ViewSet (General)
-# -------------------------------
-class EmployeeViewSet(viewsets.ModelViewSet):
-    
-    queryset = Employee.objects.select_related("user", "pump")
-    serializer_class = EmployeeSerializer
-    permission_classes = [IsAuthenticated, IsAdminOwnerManager]
+# -----------------------------------
+# SHARED QUERYSET
+# -----------------------------------
+def employee_queryset():
+    return Employee.objects.select_related(
+        "user",
+        "owner",
+        "pump",
+        "pump__manager",
+        "pump__manager__user",
+    )
+
+
+# -----------------------------------
+# EMPLOYEE VIEWSET
+# -----------------------------------
+class EmployeeViewSet(viewsets.ReadOnlyModelViewSet):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsAdminOwnerManager
+    ]
+
+    queryset = employee_queryset()
+
+    def get_serializer_class(self):
+        if self.action == "list":
+            return EmployeeListSerializer
+
+        return EmployeeProfileSerializer
 
     def get_queryset(self):
         user = self.request.user
+        queryset = employee_queryset()
 
-        # Admin → all employees
+        # Admin
         if user.role == "admin":
-            return Employee.objects.all()
+            return queryset
 
-        # Owner → employees of their pumps
+        # Owner
         if user.role == "owner":
-            return Employee.objects.filter(pump__owner=user)
+            return queryset.filter(owner=user)
 
-        # Manager → employees of their pump
+        # Manager
         if user.role == "manager":
-            employee = Employee.objects.select_related("pump").filter(user=user).first()
+            manager_emp = queryset.filter(
+                user=user
+            ).first()
 
-            if employee:
-                return Employee.objects.filter(pump=employee.pump)
+            if manager_emp and manager_emp.pump:
+                return queryset.filter(
+                    pump=manager_emp.pump
+                )
 
         return Employee.objects.none()
 
 
-# -------------------------------
-# Attendants List API
-# -------------------------------
+# -----------------------------------
+# ATTENDANTS LIST
+# -----------------------------------
 class AttendantListView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        IsAdminOwnerManager
+    ]
 
     def get(self, request):
-
         user = request.user
+        queryset = employee_queryset()
 
-        # Admin → all attendants
+        # Admin
         if user.role == "admin":
-            attendants = Employee.objects.filter(user__role="attendant")
-
-        # Owner → attendants of owned pumps
-        elif user.role == "owner":
-            attendants = Employee.objects.filter(
-                pump__owner=user,
+            attendants = queryset.filter(
                 user__role="attendant"
             )
 
-        # Manager → attendants of their pump
-        elif user.role == "manager":
-            employee = Employee.objects.select_related("pump").filter(user=user).first()
+        # Owner
+        elif user.role == "owner":
+            attendants = queryset.filter(
+                owner=user,
+                user__role="attendant"
+            )
 
-            if not employee:
+        # Manager
+        elif user.role == "manager":
+            manager_emp = queryset.filter(
+                user=user
+            ).first()
+
+            if not manager_emp or not manager_emp.pump:
                 return Response([])
 
-            attendants = Employee.objects.filter(
-                pump=employee.pump,
+            attendants = queryset.filter(
+                pump=manager_emp.pump,
                 user__role="attendant"
             )
 
         else:
             attendants = Employee.objects.none()
 
-        serializer = EmployeeSerializer(attendants, many=True)
+        serializer = EmployeeListSerializer(
+            attendants,
+            many=True
+        )
+
         return Response(serializer.data)
 
 
-# -------------------------------
-# Profile API (Attendant/Manager)
-# -------------------------------
+# -----------------------------------
+# MANAGERS LIST
+# -----------------------------------
+class ManagerListView(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsAdminOrOwner
+    ]
+
+    def get(self, request):
+        user = request.user
+        queryset = employee_queryset()
+
+        # Admin
+        if user.role == "admin":
+            managers = queryset.filter(
+                user__role="manager"
+            )
+
+        # Owner
+        elif user.role == "owner":
+            managers = queryset.filter(
+                owner=user,
+                user__role="manager"
+            )
+
+        else:
+            managers = Employee.objects.none()
+
+        serializer = EmployeeListSerializer(
+            managers,
+            many=True
+        )
+
+        return Response(serializer.data)
+
+
+# -----------------------------------
+# EMPLOYEE PROFILE
+# -----------------------------------
 class EmployeeProfileView(APIView):
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [
+        IsAuthenticated,
+        IsManagerOrAttendant
+    ]
 
     def get(self, request):
 
-        employee = Employee.objects.select_related("pump").filter(user=request.user).first()
+        employee = employee_queryset().filter(
+            user=request.user
+        ).first()
 
         if not employee:
-            return Response({"error": "Employee not found"}, status=404)
+            return Response(
+                {"error": "Employee not found"},
+                status=404
+            )
 
-        serializer = EmployeeSerializer(employee)
+        serializer = EmployeeProfileSerializer(
+            employee
+        )
+
         return Response(serializer.data)
     

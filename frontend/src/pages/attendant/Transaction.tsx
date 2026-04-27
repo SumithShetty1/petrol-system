@@ -3,7 +3,7 @@ import { createTransaction } from "../../services/transactionService";
 import { fetchCustomer } from "../../services/customerService";
 import { getFuelRates } from "../../services/fuelService";
 
-import PageHeader from "../../components/common/PageHeader";
+import PageHeader from "../../components/common/header/PageHeader";
 import PhoneInputSection from "../../components/attendant/transaction/PhoneInputSection";
 import CustomerInfoCard from "../../components/attendant/transaction/CustomerInfoCard";
 import CustomerNameInput from "../../components/attendant/transaction/CustomerNameInput";

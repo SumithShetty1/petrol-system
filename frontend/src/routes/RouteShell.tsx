@@ -5,7 +5,7 @@ import RoleLayout from "../layouts/RoleLayout";
 
 type Props = {
   allowedRoles: string[];
-  role: "attendant" | "manager" | "owner";
+  role: "attendant" | "manager" | "owner" | "admin";
 };
 
 export default function RouteShell({
