@@ -57,7 +57,7 @@ class PumpViewSet(viewsets.ModelViewSet):
         if user.role == "manager":
             employee = user.employee_profile
 
-            if employee and employee.pump:
+            if employee and employee.pump and employee.pump.is_active:
                 return base_queryset.filter(
                     pump_code=employee.pump.pump_code
                 )
@@ -105,11 +105,8 @@ class PumpViewSet(viewsets.ModelViewSet):
 
         employee = user.employee_profile
 
-        if not employee or not employee.pump:
-            return Response(
-                {"error": "Pump not assigned"},
-                status=404
-            )
+        if not employee or not employee.pump or not employee.pump.is_active:
+            return Response({"error": "Pump not assigned"}, status=404)
 
         serializer = PumpMiniSerializer(
             employee.pump
@@ -122,6 +119,9 @@ class PumpViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["get"], url_path="available")
     def available(self, request):
         user = request.user
+
+        if user.role != "owner":
+            return Response({"error": "Only owners can view available pumps"}, status=403)
 
         queryset = Pump.objects.filter(
             owner=user,

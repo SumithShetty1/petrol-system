@@ -10,13 +10,16 @@ from datetime import (
 )
 
 from django.utils import timezone
+from django.db.models import Q
 
 from accounts.permissions import (
+    IsAdmin,
     IsAdminOwnerManager,
     IsAttendant
 )
 
 from employees.models import Employee
+from pumps.models import Pump
 
 from .models import Transaction
 from .serializers import (
@@ -27,6 +30,10 @@ from .services import (
     process_transaction
 )
 
+from .pagination import StandardResultsSetPagination
+
+from django.http import HttpResponse
+import openpyxl
 
 # -----------------------------------
 # CREATE TRANSACTION
@@ -61,10 +68,10 @@ class CreateTransactionView(APIView):
                 status=400
             )
 
-        transaction = process_transaction(
-            request.data,
-            employee
-        )
+        try:
+            transaction = process_transaction(request.data, employee)
+        except ValueError as e:
+            return Response({"error": str(e)}, status=400)
 
         serializer = (
             TransactionCreateSerializer(
@@ -102,6 +109,8 @@ class TransactionViewSet(
         IsAuthenticated,
         IsAdminOwnerManager
     ]
+
+    pagination_class = StandardResultsSetPagination
 
     def get_serializer_context(self):
         return {
@@ -160,8 +169,9 @@ class TransactionViewSet(
         elif user.role == "owner":
 
             queryset = queryset.filter(
-                pump__owner=user
-            )
+                Q(pump__owner=user) |
+                Q(pump_code__in=Pump.objects.filter(owner=user).values("pump_code"))
+            ).distinct()
 
         elif user.role == "manager":
 
@@ -197,8 +207,9 @@ class TransactionViewSet(
             elif employee.pump:
 
                 queryset = queryset.filter(
-                    pump_code=employee.pump.pump_code
-                )
+                    Q(pump=employee.pump) |
+                    Q(pump_code=employee.pump.pump_code)
+                ).distinct()
 
             else:
                 return (
@@ -208,14 +219,15 @@ class TransactionViewSet(
         elif user.role == "attendant":
 
             queryset = queryset.filter(
-                attendant_phone=user.username
+                Q(attendant__user=user) |
+                Q(attendant_phone=user.username)
             )
 
         else:
             return (
                 Transaction.objects.none()
             )
-
+        
         # -----------------------------------
         # CUSTOMER FILTER
         # (Admin / Owner / Attendant)
@@ -253,7 +265,8 @@ class TransactionViewSet(
             ]
         ):
             queryset = queryset.filter(
-                pump_code=pump_code
+                Q(pump__pump_code=pump_code) |
+                Q(pump_code=pump_code)
             )
 
         # -----------------------------------
@@ -270,52 +283,45 @@ class TransactionViewSet(
         # -----------------------------------
         # DATE FILTER
         # -----------------------------------
-        today = (
-            timezone
-            .localtime()
-            .date()
-        )
+        now = timezone.localtime()
+
+        today = now.date()
 
         if range_type == "all":
             pass
         
         elif range_type == "today":
-            queryset = queryset.filter(
-                created_at__date=today
-            )
+            start = timezone.make_aware(datetime.combine(today, time.min))
+            end = timezone.make_aware(datetime.combine(today, time.max))
+
+            queryset = queryset.filter(created_at__range=[start, end])
 
         elif range_type == "week":
 
-            start = (
-                today -
-                timedelta(days=7)
-            )
+            start_date = today - timedelta(days=today.weekday())
 
-            queryset = queryset.filter(
-                created_at__date__gte=start
-            )
+            start = timezone.make_aware(datetime.combine(start_date, time.min))
+            end = timezone.make_aware(datetime.combine(today, time.max))
+
+            queryset = queryset.filter(created_at__range=[start, end])
 
         elif range_type == "month":
 
-            start = (
-                today -
-                timedelta(days=30)
-            )
+            start_date = today - timedelta(days=30)
 
-            queryset = queryset.filter(
-                created_at__date__gte=start
-            )
+            start = timezone.make_aware(datetime.combine(start_date, time.min))
+            end = timezone.make_aware(datetime.combine(today, time.max))
+
+            queryset = queryset.filter(created_at__range=[start, end])
 
         elif range_type == "year":
 
-            start = (
-                today -
-                timedelta(days=365)
-            )
+            start_date = today - timedelta(days=365)
 
-            queryset = queryset.filter(
-                created_at__date__gte=start
-            )
+            start = timezone.make_aware(datetime.combine(start_date, time.min))
+            end = timezone.make_aware(datetime.combine(today, time.max))
+            
+            queryset = queryset.filter(created_at__range=[start, end])
 
         elif range_type == "custom":
 
@@ -372,7 +378,86 @@ class TransactionViewSet(
                     ]
                 )
 
-        return queryset.order_by(
-            "-created_at"
+        return queryset.order_by("-created_at", "-id")
+    
+
+class ExportTransactionsExcel(APIView):
+
+    permission_classes = [
+        IsAuthenticated,
+        IsAdmin
+    ]
+
+    def get(self, request):
+
+        viewset = TransactionViewSet()
+        viewset.request = request
+        queryset = viewset.get_queryset()
+
+        # -----------------------------------
+        # CREATE EXCEL
+        # -----------------------------------
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Transactions"
+
+        # Headers
+        ws.append([
+            "ID",
+            "Type",
+            "Original TXN ID",
+            "Customer Name",
+            "Customer Mobile",
+            "Pump Code",
+            "Pump Name",
+            "Pump Location",
+            "Attendant Name",
+            "Attendant Phone",
+            "Manager Name",
+            "Manager Phone",
+            "Fuel Type",
+            "Original Amount",
+            "Final Amount",
+            "Quantity",
+            "Points Used",
+            "Points Earned",
+            "Remaining Points",
+            "Created At",
+        ])
+
+        # Data (NO pagination)
+        for txn in queryset.iterator():
+            ws.append([
+                txn.id,
+                txn.transaction_type,
+                txn.original_transaction.id if txn.original_transaction else None,
+                txn.customer_name,
+                txn.customer_mobile,
+                txn.pump_code,
+                txn.pump_name,
+                txn.pump_location,
+                txn.attendant_name,
+                txn.attendant_phone,
+                txn.manager_name,
+                txn.manager_phone,
+                txn.get_fuel_type_display(),
+                float(txn.original_amount),
+                float(txn.final_amount),
+                float(txn.quantity),
+                float(txn.points_used),
+                float(txn.points_earned),
+                float(txn.remaining_points),
+                txn.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+            ])
+
+        # -----------------------------------
+        # RESPONSE
+        # -----------------------------------
+        response = HttpResponse(
+            content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
+        response["Content-Disposition"] = 'attachment; filename="transactions.xlsx"'
+
+        wb.save(response)
+        return response
     

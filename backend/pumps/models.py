@@ -32,7 +32,8 @@ class Pump(models.Model):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name="owned_pumps"
+        related_name="owned_pumps",
+        db_index=True
     )
 
     manager = models.ForeignKey(

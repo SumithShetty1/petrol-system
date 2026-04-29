@@ -10,6 +10,11 @@ class Transaction(models.Model):
         ("diesel", "Diesel"),
     )
 
+    TRANSACTION_TYPES = (
+        ("normal", "Normal"),
+        ("reversal", "Reversal"),
+    )
+
     # -----------------------------------
     # RELATIONS (LIVE REFERENCES)
     # -----------------------------------
@@ -61,8 +66,7 @@ class Transaction(models.Model):
     )
 
     pump_code = models.CharField(
-        max_length=30,
-        db_index=True
+        max_length=30
     )
 
     pump_name = models.CharField(
@@ -91,8 +95,7 @@ class Transaction(models.Model):
     manager_phone = models.CharField(
         max_length=15,
         null=True,
-        blank=True,
-        db_index=True
+        blank=True
     )
 
     # -----------------------------------
@@ -109,17 +112,17 @@ class Transaction(models.Model):
     # -----------------------------------
 
     original_amount = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2
     )
 
     final_amount = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2
     )
 
     quantity = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=3
     )
 
@@ -128,21 +131,40 @@ class Transaction(models.Model):
     # -----------------------------------
 
     points_used = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         default=0
     )
 
     points_earned = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         default=0
     )
 
     remaining_points = models.DecimalField(
-        max_digits=10,
+        max_digits=12,
         decimal_places=2,
         default=0
+    )
+
+    # -----------------------------------
+    # REVERSAL SYSTEM
+    # -----------------------------------
+
+    transaction_type = models.CharField(
+        max_length=10,
+        choices=TRANSACTION_TYPES,
+        default="normal",
+        db_index=True
+    )
+
+    original_transaction = models.OneToOneField(
+        "self",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reversal_entry"
     )
 
     # -----------------------------------
@@ -161,16 +183,29 @@ class Transaction(models.Model):
     class Meta:
         ordering = ["-created_at"]
         indexes = [
-            models.Index(
-                fields=["pump_code", "created_at"]
-            ),
-            models.Index(
-                fields=["attendant_phone", "created_at"]
-            ),
-            models.Index(
-                fields=["customer_mobile", "created_at"]
-            ),
+            # Core analytics indexes
+            models.Index(fields=["pump_code", "created_at"]),            
+            models.Index(fields=["fuel_type", "created_at"]),
+            
+            # Existing useful indexes
+            models.Index(fields=["attendant_phone", "created_at"]),
+            models.Index(fields=["customer_mobile", "created_at"]),
+
+            # Reversal optimization
+            models.Index(fields=["transaction_type", "created_at"]),
+            models.Index(fields=["original_transaction"]),
         ]
+
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(transaction_type="normal", original_transaction__isnull=True) |
+                    models.Q(transaction_type="reversal", original_transaction__isnull=False)
+                ),
+                name="valid_transaction_reversal_structure"
+            )
+        ]
+        
 
     # -----------------------------------
     # STRING REPRESENTATION

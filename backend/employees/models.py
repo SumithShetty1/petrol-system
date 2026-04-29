@@ -13,7 +13,8 @@ class Employee(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name="employee_profile"
+        related_name="employee_profile",
+        db_index=True
     )
 
     pump = models.ForeignKey(
@@ -30,7 +31,7 @@ class Employee(models.Model):
 
     class Meta:
         ordering = ["user__first_name"]
-
+        unique_together = ["owner", "user"]
 
     def __str__(self):
         employee_name = (

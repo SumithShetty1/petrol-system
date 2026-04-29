@@ -10,6 +10,9 @@ from customers.models import (
 from fuel.models import FuelRate
 from .models import Transaction
 
+from django.utils import timezone
+from datetime import timedelta
+
 
 # -----------------------------------
 # CONFIG
@@ -43,11 +46,12 @@ def process_transaction(
             "Attendant is not assigned to any pump"
         )
 
+    if not pump.is_active:
+        raise ValueError("Pump is inactive")
+
     fuel_type = data["fuel_type"]
 
-    original_amount = Decimal(
-        data["amount"]
-    )
+    original_amount = Decimal(str(data["amount"]))
 
     amount = original_amount
 
@@ -63,10 +67,8 @@ def process_transaction(
         )
     )
 
-    if redeem_points < 0:
-        raise ValueError(
-            "Redeem points cannot be negative"
-        )
+    if redeem_points not in [0, Decimal("1000")]:
+        raise ValueError("Invalid redeem points")
 
     manager = pump.manager
 
@@ -107,22 +109,41 @@ def process_transaction(
     quantity = (original_amount / price).quantize(Decimal("0.001"))
 
     # -----------------------------------
+    # WEEKLY REDEEM CHECK
+    # -----------------------------------
+    if redeem_points == Decimal("1000"):
+        last_redeem = PointsHistory.objects.filter(
+            customer=customer,
+            type="redeem",
+            reversal__isnull=True
+        ).order_by("-created_at").first()
+
+        if last_redeem:
+            next_allowed = last_redeem.created_at + timedelta(days=7)
+
+            if timezone.now() < next_allowed:
+                raise ValueError(
+                    f"Customer can redeem again after {next_allowed}"
+                )
+    
+    # -----------------------------------
     # REDEEM LOGIC
     # -----------------------------------
     points_used = Decimal("0")
 
-    if (
-        redeem_points > 0 and
-        customer.total_points >= redeem_points
-    ):
+    if redeem_points == Decimal("1000"):
+
+        if original_amount < Decimal("100"):
+            raise ValueError("Minimum ₹100 required to redeem")
+
+        if customer.total_points < redeem_points:
+            raise ValueError("Insufficient points")
+
         points_used = redeem_points
 
         redeem_value = (
             redeem_points * POINT_REDEEM_VALUE
         ).quantize(Decimal("0.01"))
-
-        if redeem_value > amount:
-            redeem_value = amount
 
         amount = (amount - redeem_value).quantize(Decimal("0.01"))
 
@@ -247,3 +268,103 @@ def process_transaction(
         )
 
     return transaction
+
+
+# -----------------------------------
+# REVERSE TRANSACTION
+# -----------------------------------
+@transaction.atomic
+def reverse_transaction(original_txn):
+
+    # Cannot reverse a reversal
+    if original_txn.transaction_type == "reversal":
+        raise ValueError("Cannot reverse a reversal transaction")
+
+    # Already reversed (check via relation)
+    if hasattr(original_txn, "reversal_entry"):
+        raise ValueError("Transaction already reversed")
+
+    customer = original_txn.customer
+
+    # -----------------------------------
+    # FIX CUSTOMER POINTS
+    # -----------------------------------
+    points_to_restore = (
+        original_txn.points_used - original_txn.points_earned
+    ).quantize(Decimal("0.01"))
+
+    if customer:
+        customer.total_points = (
+            customer.total_points + points_to_restore
+        ).quantize(Decimal("0.01"))
+
+        if customer.total_points < 0:
+            customer.total_points = Decimal("0.00")
+
+        customer.save()
+
+    # -----------------------------------
+    # CREATE REVERSAL TRANSACTION
+    # -----------------------------------
+    reversed_txn = Transaction.objects.create(
+        customer=original_txn.customer,
+        pump=original_txn.pump,
+        attendant=original_txn.attendant,
+        manager=original_txn.manager,
+
+        transaction_type="reversal",
+        original_transaction=original_txn,
+
+        fuel_type=original_txn.fuel_type,
+
+        original_amount=-original_txn.original_amount,
+        final_amount=-original_txn.final_amount,
+        quantity=-original_txn.quantity,
+
+        points_used=-original_txn.points_used,
+        points_earned=-original_txn.points_earned,
+        remaining_points=customer.total_points if customer else Decimal("0.00"),
+
+        customer_name=original_txn.customer_name,
+        customer_mobile=original_txn.customer_mobile,
+
+        pump_code=original_txn.pump_code,
+        pump_name=original_txn.pump_name,
+        pump_location=original_txn.pump_location,
+
+        attendant_name=original_txn.attendant_name,
+        attendant_phone=original_txn.attendant_phone,
+
+        manager_name=original_txn.manager_name,
+        manager_phone=original_txn.manager_phone,
+    )
+
+    # -----------------------------------
+    # REVERSE POINTS HISTORY
+    # -----------------------------------
+    original_entries = PointsHistory.objects.filter(
+        transaction=original_txn,
+        reversal__isnull=True
+    )
+
+    running_balance = customer.total_points if customer else Decimal("0.00")
+
+    for entry in original_entries:
+        delta = -entry.points_change
+        running_balance += delta
+
+        PointsHistory.objects.create(
+            customer=entry.customer,
+            transaction=reversed_txn,
+
+            customer_name=entry.customer_name,
+            customer_mobile=entry.customer_mobile,
+
+            points_change=delta,
+            balance_after=running_balance,
+
+            type="reversal",
+            reversed_from=entry
+        )
+
+    return reversed_txn

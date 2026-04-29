@@ -18,14 +18,10 @@ class CustomerViewSet(viewsets.ReadOnlyModelViewSet):
     def get_queryset(self):
         queryset = Customer.objects.all()
 
-        mobile = self.request.query_params.get(
-            "mobile_number"
-        )
+        mobile = self.request.query_params.get("mobile_number")
 
         if mobile:
-            queryset = queryset.filter(
-                mobile_number=mobile
-            )
+            queryset = queryset.filter(mobile_number=mobile)
 
         return queryset
     
