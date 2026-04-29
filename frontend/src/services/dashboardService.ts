@@ -2,6 +2,55 @@ import api from "../api/api";
 
 
 // -----------------------------------
+// ADMIN DASHBOARD
+// -----------------------------------
+export const getAdminDashboard =
+  async (
+    range: string,
+    startDate?: string,
+    endDate?: string
+  ) => {
+    let url =
+      `/reports/admin/?range=${range}`;
+
+    if (
+      range === "custom" &&
+      startDate &&
+      endDate
+    ) {
+      url +=
+        `&start_date=${startDate}&end_date=${endDate}`;
+    }
+
+    const res =
+      await api.get(url);
+
+    return res.data;
+  };
+
+
+export const getAdminPumpDashboard = async (
+  pumpCode: string,
+  range: string,
+  startDate?: string,
+  endDate?: string
+) => {
+  let url = `/reports/admin/pumps/${pumpCode}/?range=${range}`;
+
+  if (
+    range === "custom" &&
+    startDate &&
+    endDate
+  ) {
+    url += `&start_date=${startDate}&end_date=${endDate}`;
+  }
+
+  const res = await api.get(url);
+  return res.data;
+};
+
+
+// -----------------------------------
 // OWNER DASHBOARD
 // -----------------------------------
 export const getOwnerDashboard = async (

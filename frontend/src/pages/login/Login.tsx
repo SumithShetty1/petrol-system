@@ -12,9 +12,10 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  const [error, setError] = useState("");
+
   const navigate = useNavigate();
   const { login } = useAuth();
-
 
   const getRedirectByRole = (role: string) => {
     switch (role) {
@@ -26,15 +27,14 @@ export default function Login() {
         return "/owner/dashboard";
       case "admin":
         return "/admin/dashboard";
-
       default:
         return "/";
     }
   };
 
-
   const handleLogin = async () => {
     setIsLoading(true);
+    setError(""); 
 
     try {
       const data = await loginUser(phone, password);
@@ -44,8 +44,14 @@ export default function Login() {
       const decoded: any = jwtDecode(data.access);
 
       navigate(getRedirectByRole(decoded.role));
-    } catch {
-      alert("Invalid username or password");
+    } catch (err: any) {
+      
+      const message =
+        err?.response?.data?.detail ||
+        err?.response?.data?.error ||
+        "Invalid phone number or password";
+
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +61,18 @@ export default function Login() {
     <LoginScreen
       phone={phone}
       password={password}
-      onPhoneChange={setPhone}
-      onPasswordChange={setPassword}
+      onPhoneChange={(val) => {
+        setPhone(val);
+        setError(""); 
+      }}
+      onPasswordChange={(val) => {
+        setPassword(val);
+        setError(""); 
+      }}
       onSubmit={handleLogin}
       isValid={phone.length === 10}
       isLoading={isLoading}
+      error={error} 
     />
   );
 }

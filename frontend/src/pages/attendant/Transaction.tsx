@@ -20,6 +20,9 @@ export default function Transaction() {
   const [phone, setPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerPoints, setCustomerPoints] = useState(0);
+  const [canRedeemWeekly, setCanRedeemWeekly] = useState(true);
+  const [nextRedeemDate, setNextRedeemDate] = useState<string | null>(null);
+
   const [isExisting, setIsExisting] = useState(false);
   const [hasFetched, setHasFetched] = useState(false);
 
@@ -32,6 +35,11 @@ export default function Transaction() {
   const [transactionSuccess, setTransactionSuccess] = useState(false);
   const [transactionDetails, setTransactionDetails] = useState<any>(null);
 
+  const [error, setError] = useState("");
+  const [fetchError, setFetchError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const [isFetching, setIsFetching] = useState(false);
 
   // Fetch Fuel Rates
   useEffect(() => {
@@ -61,9 +69,33 @@ export default function Transaction() {
     }
   }, [amount, fuelType, fuelRates]);
 
+  useEffect(() => {
+    const amountValue = parseFloat(amount || "0");
+
+    if (
+      isRedeemApplied &&
+      (
+        amountValue < 100 ||
+        customerPoints < 1000 ||
+        !canRedeemWeekly
+      )
+    ) {
+      setIsRedeemApplied(false);
+    }
+  }, [amount, customerPoints, canRedeemWeekly, isRedeemApplied]);
+
   // Redeem Logic
   const getRedeemDiscount = () => {
-    if (isRedeemApplied && customerPoints >= 1000) return 100;
+    const amountValue = parseFloat(amount || "0");
+
+    if (
+      isRedeemApplied &&
+      amountValue >= 100 &&
+      customerPoints >= 1000 &&
+      canRedeemWeekly
+    ) {
+      return 100;
+    }
     return 0;
   };
 
@@ -77,49 +109,88 @@ export default function Transaction() {
   };
 
   const canShowRedeem = () => {
-    return parseFloat(amount || "0") >= 100;
+    return (
+      parseFloat(amount || "0") >= 100 &&
+      customerPoints >= 1000 &&
+      canRedeemWeekly
+    );
   };
 
   // Fetch Customer
   const handleFetchCustomer = async () => {
+    setFetchError("");
+    setIsFetching(true);
+
     if (phone.length !== 10) {
-      alert("Enter valid phone number");
+      setFetchError("Enter a valid 10-digit phone number");
       return;
     }
 
     try {
       const data = await fetchCustomer(phone);
+
       if (data.length > 0) {
-        setCustomerName(data[0].name);
-        setCustomerPoints(data[0].total_points);
+        const customer = data[0];
+
+        setCustomerName(customer.name);
+        setCustomerPoints(customer.total_points);
+        setCanRedeemWeekly(customer.can_redeem);
+        setNextRedeemDate(customer.next_redeem_at);
+        setIsRedeemApplied(false);
         setIsExisting(true);
       } else {
         setCustomerName("");
         setCustomerPoints(0);
         setIsExisting(false);
+        setCanRedeemWeekly(true);
+        setNextRedeemDate(null);
+        setIsRedeemApplied(false);
       }
+
       setHasFetched(true);
-    } catch {
-      alert("Error fetching customer");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        "Failed to fetch customer. Try again.";
+
+      setFetchError(message);
+    } finally {
+      setIsFetching(false);
     }
   };
 
   // Submit Transaction
   const handleSubmit = async () => {
+    setError("");
+    setIsSubmitting(true);
+
     try {
       const data = {
         mobile_number: phone,
         name: customerName,
         fuel_type: fuelType,
         amount: amount,
-        redeem_points: isRedeemApplied ? 1000 : 0,
+        redeem_points:
+          isRedeemApplied &&
+            canRedeemWeekly &&
+            parseFloat(amount || "0") >= 100
+            ? 1000
+            : 0,
       };
 
       const res = await createTransaction(data);
+
       setTransactionDetails(res);
       setTransactionSuccess(true);
-    } catch {
-      alert("Transaction failed");
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error ||
+        err?.response?.data?.detail ||
+        "Transaction failed. Please try again.";
+
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -138,7 +209,11 @@ export default function Transaction() {
     setTransactionDetails(null);
   };
 
-  const isSubmitDisabled = !customerName || !fuelType || !amount || getFinalPayable() < 0;
+  const isSubmitDisabled =
+    !customerName ||
+    !fuelType ||
+    !amount ||
+    (isRedeemApplied && !canRedeemWeekly);
 
   // Success Screen
   if (transactionSuccess && transactionDetails) {
@@ -161,9 +236,20 @@ export default function Transaction() {
 
             <PhoneInputSection
               phone={phone}
-              onPhoneChange={setPhone}
+              onPhoneChange={(val) => {
+                setPhone(val);
+                setFetchError("");
+                setError("");
+              }}
               onFetch={handleFetchCustomer}
+              loading={isFetching}
             />
+
+            {fetchError && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">
+                {fetchError}
+              </div>
+            )}
 
             {hasFetched && (
               <CustomerInfoCard
@@ -176,7 +262,10 @@ export default function Transaction() {
             {hasFetched && !isExisting && (
               <CustomerNameInput
                 customerName={customerName}
-                onNameChange={setCustomerName}
+                onNameChange={(val) => {
+                  setCustomerName(val);
+                  setError("");
+                }}
               />
             )}
 
@@ -184,7 +273,10 @@ export default function Transaction() {
               {hasFetched && (
                 <FuelTypeSelector
                   fuelType={fuelType}
-                  onFuelTypeChange={setFuelType}
+                  onFuelTypeChange={(val) => {
+                    setFuelType(val);
+                    setError("");
+                  }}
                   fuelRates={fuelRates}
                 />
               )}
@@ -192,7 +284,10 @@ export default function Transaction() {
               {hasFetched && (
                 <AmountInput
                   amount={amount}
-                  onAmountChange={setAmount}
+                  onAmountChange={(val) => {
+                    setAmount(val);
+                    setError("");
+                  }}
                 />
               )}
             </div>
@@ -206,6 +301,8 @@ export default function Transaction() {
                 customerPoints={customerPoints}
                 isRedeemApplied={isRedeemApplied}
                 canRedeem={canShowRedeem()}
+                nextRedeemDate={nextRedeemDate}
+                canRedeemWeekly={canRedeemWeekly}
                 onToggleRedeem={() => setIsRedeemApplied(!isRedeemApplied)}
               />
             )}
@@ -222,12 +319,21 @@ export default function Transaction() {
               <PointsEarnedCard pointsEarned={getPointsEarned()} />
             )}
 
+
+            {hasFetched && error && (
+              <div className="bg-red-50 border border-red-200 text-red-600 text-sm px-3 py-2 rounded-lg">
+                {error}
+              </div>
+            )}
+
             {hasFetched && (
               <SubmitButton
                 onClick={handleSubmit}
-                disabled={isSubmitDisabled}
+                disabled={isSubmitDisabled || isSubmitting}
+                loading={isSubmitting}
               />
             )}
+
           </div>
         </div>
       </div>

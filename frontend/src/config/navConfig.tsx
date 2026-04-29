@@ -7,6 +7,8 @@ import {
   Search,
   Settings,
   Building2,
+  UserCog,
+  UserCheck,
 } from "lucide-react";
 
 export const attendantNav = [
@@ -64,7 +66,12 @@ export const ownerNav = [
   {
     label: "Managers",
     path: "/owner/managers",
-    icon: Users,
+    icon: UserCog,
+  },
+  {
+    label: "Attendants",
+    path: "/owner/attendants",
+    icon: UserCheck,
   },
   {
     label: "Transactions",
@@ -100,7 +107,7 @@ export const adminNav = [
     icon: FileText,
   },
   {
-    label: "Users",
+    label: "User",
     path: "/admin/users",
     icon: User,
   },

@@ -5,7 +5,7 @@ import { getMyPump } from "../../services/pumpService";
 import PageHeader from "../../components/common/header/PageHeader";
 import DateFilterTabs from "../../components/common/dateFilter/DateFilterTabs";
 import DateRangePicker from "../../components/common/dateFilter/DateRangePicker";
-import TotalSalesCard from "../../components/common/dashboard/TotalSalesCard";
+import AmountFuelCards from "../../components/common/dashboard/AmountFuelCards";
 import FuelStatsCards from "../../components/common/dashboard/FuelStatsCards";
 import CreditStatsCards from "../../components/common/dashboard/CreditStatsCards";
 import OverallAnalytics from "../../components/common/dashboard/OverallAnalytics";
@@ -149,7 +149,10 @@ export default function PumpDashboard() {
 
       {/* KPI Cards */}
       <div className="px-6 mt-6 space-y-3">
-        <TotalSalesCard amount={totalSales} />
+        <AmountFuelCards
+          totalSales={totalSales}
+          totalQuantity={totalQuantity}
+        />
 
         <FuelStatsCards
           petrolQuantity={petrolQuantity}

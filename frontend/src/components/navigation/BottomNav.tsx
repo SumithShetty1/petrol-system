@@ -20,13 +20,22 @@ export default function BottomNav({ items }: Props) {
               key={item.path}
               to={item.path}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center flex-1 h-full ${
-                  isActive ? "text-blue-500" : "text-gray-400"
+                `flex flex-col items-center justify-center flex-1 h-full transition ${isActive ? "text-blue-500" : "text-gray-400"
                 }`
               }
             >
-              <Icon className="w-5 h-5" />
-              <span className="text-xs mt-1">{item.label}</span>
+              {({ isActive }) => (
+                <>
+                  <Icon className="w-5 h-5" />
+
+                  {/* Show label only if active */}
+                  {isActive && (
+                    <span className="text-[10px] mt-1">
+                      {item.label}
+                    </span>
+                  )}
+                </>
+              )}
             </NavLink>
           );
         })}

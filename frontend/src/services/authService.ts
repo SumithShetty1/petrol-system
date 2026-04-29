@@ -55,6 +55,24 @@ export const createManager = async (data: {
   return res.data;
 };
 
+export const createOwner = async (data: {
+  first_name: string;
+  last_name: string;
+  username: string;
+  password: string;
+  is_active: boolean;
+}) => {
+  const res = await api.post(
+    "/auth/register/",
+    {
+      ...data,
+      role: "owner",
+    }
+  );
+
+  return res.data;
+};
+
 // -----------------------------------
 // UPDATE USER
 // -----------------------------------
@@ -84,6 +102,27 @@ export const deleteUser = async (
 ) => {
   const res = await api.delete(
     `/auth/users/${id}/`
+  );
+
+  return res.data;
+};
+
+// -----------------------------------
+// OWNERS
+// -----------------------------------
+export const getOwners = async () => {
+  const res = await api.get(
+    "/auth/owners/"
+  );
+
+  return res.data;
+};
+
+export const getOwnerById = async (
+  id: number
+) => {
+  const res = await api.get(
+    `/auth/owners/${id}/`
   );
 
   return res.data;

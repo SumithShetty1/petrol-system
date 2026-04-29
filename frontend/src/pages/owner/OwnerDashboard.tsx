@@ -4,9 +4,12 @@ import { getOwnerDashboard } from "../../services/dashboardService";
 import PageHeader from "../../components/common/header/PageHeader";
 import DateFilterTabs from "../../components/common/dateFilter/DateFilterTabs";
 import DateRangePicker from "../../components/common/dateFilter/DateRangePicker";
+import AmountFuelCards from "../../components/common/dashboard/AmountFuelCards";
+import EntityStatsCards from "../../components/common/dashboard/EntityStatsCards";
 import FuelStatsCards from "../../components/common/dashboard/FuelStatsCards";
 import CreditStatsCards from "../../components/common/dashboard/CreditStatsCards";
 import OverallAnalytics from "../../components/common/dashboard/OverallAnalytics";
+
 
 export type DateFilter =
   | "today"
@@ -279,34 +282,11 @@ export default function OwnerDashboard() {
       {/* KPI Cards */}
       <div className="px-6 mt-6 space-y-3">
 
-        {/* Revenue + Pumps */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-
-          <div className="bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl p-4 text-white shadow-lg">
-            <p className="text-white/80 text-sm">
-              Total Revenue
-            </p>
-
-            <p className="text-2xl mt-1 font-semibold">
-              ₹
-              {totalSales.toFixed(
-                2
-              )}
-            </p>
-          </div>
-
-          <div className="bg-white rounded-2xl p-4 shadow-md border border-gray-100">
-            <p className="text-gray-500 text-sm">
-              Total Pumps
-            </p>
-
-            <p className="text-2xl mt-1 font-semibold text-gray-800">
-              {
-                totalPumps
-              }
-            </p>
-          </div>
-        </div>
+        {/* AMOUNT & FUEL */}
+        <AmountFuelCards
+          totalSales={totalSales}
+          totalQuantity={totalQuantity}
+        />
 
         {/* Fuel Stats */}
         <FuelStatsCards
@@ -333,6 +313,11 @@ export default function OwnerDashboard() {
             creditsRedeemed
           }
         />
+        {/* ENTITY STATS */}
+        <EntityStatsCards
+          totalPumps={totalPumps}
+        />
+
       </div>
 
       {/* Overall Analytics */}

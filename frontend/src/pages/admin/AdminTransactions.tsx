@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Filter } from "lucide-react";
 
-import { getOwnerTransactions } from "../../services/transactionService";
+import { getTransactions, exportTransactions } from "../../services/transactionService";
 import { getPumps } from "../../services/pumpService";
 
 import PageHeader from "../../components/common/header/PageHeader";
@@ -29,13 +29,14 @@ type Pump = {
   pump_code: string;
 };
 
-export default function OwnerTransactions() {
+export default function AdminTransactions() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [pumps, setPumps] = useState<Pump[]>([]);
 
   const [page, setPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const [hasNext, setHasNext] = useState(false);
+
 
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
@@ -52,6 +53,7 @@ export default function OwnerTransactions() {
   const [endDate, setEndDate] = useState("");
 
   const requestIdRef = useRef(0);
+
   const skipNextFetch = useRef(false);
 
   // -----------------------------------
@@ -64,21 +66,22 @@ export default function OwnerTransactions() {
       setTableLoading(true);
       setError("");
 
-      const res = await getOwnerTransactions(
+      const res = await getTransactions(
         dateFilter,
         page,
         20,
         startDate,
         endDate,
-        pumpFilter,
-        fuelTypeFilter
+        undefined,
+        fuelTypeFilter,
+        pumpFilter
       );
 
       if (requestId !== requestIdRef.current) return;
 
       setTransactions(res.data);
       setTotalCount(res.total);
-      setHasNext(!!res.next);
+      setHasNext(res.hasNext);
 
     } catch (error) {
       console.error(error);
@@ -100,12 +103,13 @@ export default function OwnerTransactions() {
         setError("");
 
         const [txnRes, pumpsData] = await Promise.all([
-          getOwnerTransactions(
+          getTransactions(
             "today",
             1,
             20,
             "",
             "",
+            undefined,
             "all",
             "all"
           ),
@@ -114,7 +118,7 @@ export default function OwnerTransactions() {
 
         setTransactions(txnRes.data);
         setTotalCount(txnRes.total);
-        setHasNext(!!txnRes.next);
+        setHasNext(txnRes.hasNext);
         setPumps(pumpsData);
 
       } catch (error) {
@@ -129,7 +133,7 @@ export default function OwnerTransactions() {
   }, []);
 
   // -----------------------------------
-  // AUTO FETCH
+  // AUTO FETCH (MAIN DRIVER)
   // -----------------------------------
   useEffect(() => {
     if (loading) return;
@@ -151,7 +155,7 @@ export default function OwnerTransactions() {
   // -----------------------------------
   const handleDateFilterChange = (filter: DateFilter) => {
     skipNextFetch.current = false;
-    
+
     setDateFilter(filter);
 
     if (filter === "custom") {
@@ -222,6 +226,34 @@ export default function OwnerTransactions() {
   };
 
   // -----------------------------------
+  // Download Excel
+  // -----------------------------------
+  const handleDownloadExcel = async () => {
+    try {
+      const blob = await exportTransactions(
+        dateFilter,
+        startDate,
+        endDate,
+        undefined,
+        fuelTypeFilter,
+        pumpFilter
+      );
+
+      const url = window.URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "transactions.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to download Excel");
+    }
+  };
+
+  // -----------------------------------
   // LOADING UI
   // -----------------------------------
   if (loading) {
@@ -242,12 +274,56 @@ export default function OwnerTransactions() {
       <PageHeader
         title="Transaction History"
         rightAction={
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-md hover:bg-gray-100"
-          >
-            <Filter className="w-5 h-5" />
-          </button>
+          <div className="flex items-center gap-2">
+
+            {/* Export Button - Matching Filter Button Style */}
+            <button
+              onClick={handleDownloadExcel}
+              className="
+                w-10 h-10
+                rounded-full
+                bg-white
+                flex items-center justify-center
+                text-blue-500
+                shadow-md
+                hover:bg-blue-50
+                transition-all
+              "
+              title="Export to Excel"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+            </button>
+
+            {/* Filter Button */}
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className="
+      w-10 h-10
+      rounded-full
+      bg-white
+      flex items-center justify-center
+      text-blue-600
+      shadow-md
+      hover:bg-gray-100
+      transition-all
+    "
+            >
+              <Filter className="w-5 h-5" />
+            </button>
+
+          </div>
         }
       />
 

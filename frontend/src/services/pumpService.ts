@@ -24,3 +24,12 @@ export const getAvailablePumps = async () => {
   const res = await api.get("pumps/available/");
   return res.data;
 };
+
+export const createPump = (data: any) =>
+  api.post("/pumps/", data);
+
+export const updatePump = (code: string, data: any) =>
+  api.patch(`/pumps/${code}/`, data);
+
+export const deletePump = (code: string) =>
+  api.delete(`/pumps/${code}/`);

@@ -1,5 +1,3 @@
-// components/owner/pump-details/PumpDashboardCard.tsx
-
 import { BarChart3 } from "lucide-react";
 
 import SectionCard from "./SectionCard";
@@ -7,7 +5,7 @@ import SectionCard from "./SectionCard";
 import DateFilterTabs from "../../common/dateFilter/DateFilterTabs";
 import DateRangePicker from "../../common/dateFilter/DateRangePicker";
 
-import TotalSalesCard from "../../common/dashboard/TotalSalesCard";
+import AmountFuelCards from "../../common/dashboard/AmountFuelCards";
 import FuelStatsCards from "../../common/dashboard/FuelStatsCards";
 import CreditStatsCards from "../../common/dashboard/CreditStatsCards";
 import OverallAnalytics from "../../common/dashboard/OverallAnalytics";
@@ -60,6 +58,9 @@ export default function PumpDashboardCard({
 }: Props) {
   const totalSales =
     stats?.total_sales || 0;
+  
+  const totalQuantity =
+    stats?.total_quantity || 0;
 
   const petrolQty =
     stats?.petrol_quantity || 0;
@@ -115,8 +116,9 @@ export default function PumpDashboardCard({
       )}
 
       <div className="space-y-4">
-        <TotalSalesCard
-          amount={totalSales}
+        <AmountFuelCards
+          totalSales={totalSales}
+          totalQuantity={totalQuantity}
         />
 
         <FuelStatsCards

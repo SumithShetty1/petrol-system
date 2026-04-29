@@ -1,0 +1,235 @@
+import { useEffect, useState } from "react";
+
+import { getAdminDashboard } from "../../services/dashboardService";
+
+import PageHeader from "../../components/common/header/PageHeader";
+import DateFilterTabs from "../../components/common/dateFilter/DateFilterTabs";
+import DateRangePicker from "../../components/common/dateFilter/DateRangePicker";
+import AmountFuelCards from "../../components/common/dashboard/AmountFuelCards";
+import EntityStatsCards from "../../components/common/dashboard/EntityStatsCards";
+import FuelStatsCards from "../../components/common/dashboard/FuelStatsCards";
+import CreditStatsCards from "../../components/common/dashboard/CreditStatsCards";
+
+export type DateFilter =
+  | "today"
+  | "week"
+  | "month"
+  | "year"
+  | "custom";
+
+export default function AdminDashboard() {
+  const [data, setData] = useState<any>(null);
+
+  const [loading, setLoading] = useState(false);
+
+  const [dateFilter, setDateFilter] =
+    useState<DateFilter>("today");
+
+  const [showCustomDatePicker, setShowCustomDatePicker] =
+    useState(false);
+
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  // -----------------------------------
+  // LOAD DATA 
+  // -----------------------------------
+  const loadDashboardData = async (
+    filter: DateFilter,
+    customStart?: string,
+    customEnd?: string
+  ) => {
+    try {
+      const dashboard = await getAdminDashboard(
+        filter,
+        customStart,
+        customEnd
+      );
+
+      setData(dashboard);
+    } catch (error) {
+      console.error("Dashboard error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // -----------------------------------
+  // INITIAL LOAD 
+  // -----------------------------------
+  useEffect(() => {
+    const init = async () => {
+      try {
+        const dashboard = await getAdminDashboard("today");
+        setData(dashboard);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    init();
+  }, []);
+
+  // -----------------------------------
+  // FILTER CHANGE
+  // -----------------------------------
+  const handleFilterChange = (filter: DateFilter) => {
+    setDateFilter(filter);
+
+    if (filter === "custom") {
+      setShowCustomDatePicker(true);
+      return;
+    }
+
+    setShowCustomDatePicker(false);
+
+    loadDashboardData(filter);
+  };
+
+  // -----------------------------------
+  // CUSTOM DATE APPLY
+  // -----------------------------------
+  const handleCustomDateSubmit = () => {
+    if (!startDate || !endDate) return;
+
+    loadDashboardData("custom", startDate, endDate);
+
+    setShowCustomDatePicker(false);
+  };
+
+  // -----------------------------------
+  // CUSTOM DATE CANCEL
+  // -----------------------------------
+  const handleCancelCustomDate = () => {
+    setShowCustomDatePicker(false);
+    setDateFilter("today");
+    setStartDate("");
+    setEndDate("");
+
+    loadDashboardData("today");
+  };
+
+  // -----------------------------------
+  // LOADING
+  // -----------------------------------
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">
+          Loading dashboard...
+        </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // NO DATA
+  // -----------------------------------
+  if (!data) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">
+          No dashboard data available
+        </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // VALUES
+  // -----------------------------------
+  const totalSales = data.total_sales ?? 0;
+  const totalQuantity = data.total_quantity ?? 0;
+
+  const petrolSales = data.petrol_sales ?? 0;
+  const dieselSales = data.diesel_sales ?? 0;
+
+  const petrolQuantity = data.petrol_quantity ?? 0;
+  const dieselQuantity = data.diesel_quantity ?? 0;
+
+  const creditsEarned = data.credits_earned ?? 0;
+  const creditsRedeemed = data.credits_redeemed ?? 0;
+
+  const totalPumps = data.total_pumps ?? 0;
+  const totalOwners = data.total_owners ?? 0;
+
+  // -----------------------------------
+  // UI
+  // -----------------------------------
+  return (
+    <div className="min-h-screen bg-gray-50 pb-20">
+      <PageHeader
+        title="Admin Dashboard"
+        subtitle="Global Overview"
+      />
+
+      <DateFilterTabs
+        className="px-6 mt-4"
+        value={dateFilter}
+        onChange={handleFilterChange}
+      />
+
+      {/* CUSTOM DATE PICKER */}
+      {showCustomDatePicker && (
+        <DateRangePicker
+          className="px-6 mt-4"
+          startDate={startDate}
+          endDate={endDate}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onSubmit={handleCustomDateSubmit}
+          onCancel={handleCancelCustomDate}
+        />
+      )}
+
+      {/* CUSTOM RANGE LABEL */}
+      {dateFilter === "custom" &&
+        !showCustomDatePicker &&
+        startDate &&
+        endDate && (
+          <div className="px-6 mt-4">
+            <div className="bg-blue-50 rounded-lg p-3 text-center">
+              <p className="text-sm text-blue-700">
+                Showing data from{" "}
+                <span className="font-medium">
+                  {startDate}
+                </span>{" "}
+                to{" "}
+                <span className="font-medium">
+                  {endDate}
+                </span>
+              </p>
+            </div>
+          </div>
+        )}
+
+      {/* KPI SECTION */}
+      <div className="px-6 mt-6 space-y-4">
+
+        <AmountFuelCards
+          totalSales={totalSales}
+          totalQuantity={totalQuantity}
+        />
+
+        <FuelStatsCards
+          petrolQuantity={petrolQuantity}
+          petrolSales={petrolSales}
+          dieselQuantity={dieselQuantity}
+          dieselSales={dieselSales}
+        />
+
+        <CreditStatsCards
+          creditsEarned={creditsEarned}
+          creditsRedeemed={creditsRedeemed}
+        />
+
+        <EntityStatsCards
+          totalPumps={totalPumps}
+          totalOwners={totalOwners}
+        />
+      </div>
+    </div>
+  );
+}

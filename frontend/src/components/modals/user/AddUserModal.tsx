@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   X,
   User,
@@ -103,7 +103,7 @@ export default function AddUserModal({
       newErrors.password = "Password is required";
     }
 
-    if (role === "manager" && !form.pump_id) {
+    if ((role === "manager" || role === "attendant") && !form.pump_id) {
       newErrors.pump_id = "Pump is required";
     }
 
@@ -111,6 +111,8 @@ export default function AddUserModal({
   };
 
   const handleSubmit = async () => {
+    if (loading) return;
+    
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
@@ -130,8 +132,10 @@ export default function AddUserModal({
         is_active: form.is_active,
       };
 
-      if (role === "manager") {
-        payload.pump_id = Number(form.pump_id);
+      if (role === "manager" || role === "attendant") {
+        if (form.pump_id) {
+          payload.pump_id = Number(form.pump_id);
+        }
       }
 
       await onSubmit(payload);
@@ -323,7 +327,7 @@ export default function AddUserModal({
               )}
             </div>
 
-            {role === "manager" && (
+            {(role === "manager" || role === "attendant") && (
               <div>
                 <label className="text-sm font-medium text-gray-700 mb-1.5 block">
                   Assign Pump <span className="text-red-500">*</span>

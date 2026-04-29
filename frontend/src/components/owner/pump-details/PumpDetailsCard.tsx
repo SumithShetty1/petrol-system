@@ -3,6 +3,7 @@ import {
   Hash,
   Fuel,
   MapPin,
+  Power
 } from "lucide-react";
 
 import SectionCard from "./SectionCard";
@@ -38,6 +39,28 @@ export default function PumpDetailsCard({
           label="Location"
           value={pump.location}
         />
+        
+        <InfoRow
+  icon={
+    <Power
+      className={`w-5 h-5 ${
+        pump.is_active ? "text-green-600" : "text-red-600"
+      }`}
+    />
+  }
+  label="Status"
+  value={
+    <span
+      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+        pump.is_active
+          ? "bg-green-100 text-green-700"
+          : "bg-red-100 text-red-700"
+      }`}
+    >
+      {pump.is_active ? "Active" : "Inactive"}
+    </span>
+  }
+/>
       </div>
     </SectionCard>
   );

@@ -24,31 +24,62 @@ export default function PeopleList({
   onEdit,
   onDelete,
 }: Props) {
+  // -----------------------------------
+  // EMPTY STATE
+  // -----------------------------------
   if (users.length === 0) {
     return (
-      <div className="px-6 mt-4">
-        <div className="bg-white rounded-2xl p-8 text-center shadow-md">
-          <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+      <div className="px-4 sm:px-6 mt-4 flex justify-center">
+        <div
+          className="
+            w-full
+            max-w-full
+            sm:max-w-lg
+            md:max-w-xl
+            lg:max-w-2xl
+            xl:max-w-3xl
+            2xl:max-w-4xl
+          "
+        >
+          <div className="bg-white rounded-2xl p-6 sm:p-8 text-center shadow-md">
+            <User className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
 
-          <p className="text-gray-500 text-sm md:text-base">
-            {emptyText}
-          </p>
+            <p className="text-gray-500 text-sm sm:text-base">
+              {emptyText}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
+  // -----------------------------------
+  // LIST VIEW
+  // -----------------------------------
   return (
-    <div className="px-6 mt-4 space-y-3">
-      {users.map((user) => (
-        <PeopleListItem
-          key={user.id}
-          user={user}
-          onSelect={() => onSelect(user)}
-          onEdit={() => onEdit(user)}
-          onDelete={() => onDelete(user)}
-        />
-      ))}
+    <div className="px-4 sm:px-6 mt-4 flex justify-center">
+      <div
+        className="
+          w-full
+          max-w-full
+          sm:max-w-lg
+          md:max-w-xl
+          lg:max-w-2xl
+          xl:max-w-3xl
+          2xl:max-w-4xl
+          space-y-2 sm:space-y-3 md:space-y-4
+        "
+      >
+        {users.map((user) => (
+          <PeopleListItem
+            key={user.id}
+            user={user}
+            onSelect={() => onSelect(user)}
+            onEdit={() => onEdit(user)}
+            onDelete={() => onDelete(user)}
+          />
+        ))}
+      </div>
     </div>
   );
 }

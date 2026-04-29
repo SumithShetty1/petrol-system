@@ -12,11 +12,12 @@ import {
 
 import PageHeader from "../../components/common/header/PageHeader";
 import PeopleList from "../../components/common/peopleList/PeopleList";
-import AttendantProfileView from "../../components/manager/attendants/AttendantProfileView";
+import AttendantProfileView from "../../components/common/profile/AttendantProfileView";
+import SearchBar from "../../components/common/search/SearchBar";
 
-import AddUserModal from "../../components/modals/AddUserModal";
-import EditUserModal from "../../components/modals/EditUserModal";
-import DeleteUserModal from "../../components/modals/DeleteUserModal";
+import AddUserModal from "../../components/modals/user/AddUserModal";
+import EditUserModal from "../../components/modals/user/EditUserModal";
+import DeleteUserModal from "../../components/modals/user/DeleteUserModal";
 
 import { createAttendant, deleteUser, updateUser } from "../../services/authService";
 
@@ -41,6 +42,8 @@ export default function AttendantsManagement() {
     selectedAttendant,
     setSelectedAttendant,
   ] = useState<any>(null);
+
+  const [search, setSearch] = useState("");
 
   const [attendantStats, setAttendantStats] =
     useState<any>(null);
@@ -156,6 +159,23 @@ export default function AttendantsManagement() {
         setProfileLoading(false);
       }
     };
+
+  const filteredAttendants = attendants.filter((attendant) => {
+    const searchValue = search.toLowerCase();
+
+    const fullName =
+      `${attendant.first_name || ""} ${attendant.last_name || ""}`.toLowerCase();
+
+    const phone = (attendant.username || "").toLowerCase();
+
+    const pump = (attendant.pump_name || "").toLowerCase();
+
+    return (
+      fullName.includes(searchValue) ||
+      phone.includes(searchValue) ||
+      pump.includes(searchValue)
+    );
+  });
 
   // -----------------------------------
   // FILTER CHANGE
@@ -360,16 +380,26 @@ export default function AttendantsManagement() {
         }
       />
 
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Search attendants..."
+        resultCount={filteredAttendants.length}
+      />
+
       <PeopleList
-        users={attendants.map(
-          (item) => ({
-            ...item,
-            subtitle:
-              item.pump_name ||
-              "—",
-          })
+        users={filteredAttendants.map((item) => ({
+          ...item,
+          subtitle:
+            item.pump_name ||
+            "—",
+        })
         )}
-        emptyText="No attendants found"
+        emptyText={
+          search
+            ? "No matching attendants found"
+            : "No attendants found"
+        }
         onSelect={
           loadAttendantDetails
         }

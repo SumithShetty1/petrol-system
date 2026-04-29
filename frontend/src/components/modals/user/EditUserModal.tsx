@@ -159,6 +159,8 @@ export default function EditUserModal({
 
     const handleSubmit =
         async () => {
+            if (loading) return;
+            
             const validationErrors =
                 validate();
 
@@ -194,17 +196,11 @@ export default function EditUserModal({
                 }
 
                 // pump reassign
-                if (
-                    role === "manager" &&
-                    form.pump_id
-                ) {
-                    payload.pump_id =
-                        Number(
-                            form.pump_id
-                        );
+                if ((role === "manager" || role === "attendant") && form.pump_id) {
+                    payload.pump_id = Number(form.pump_id);
                 }
 
-                const userId = user?.user_id;
+                const userId = user?.user_id || user?.id;
 
                 if (!userId) {
                     setApiError("Invalid user selected");
@@ -431,7 +427,10 @@ export default function EditUserModal({
                                         handleChange
                                     }
                                     placeholder="Enter new password"
-                                    className="w-full pl-10 pr-12 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                    className={`w-full pl-10 pr-12 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none ${errors.password
+                                        ? "border-red-300 bg-red-50/30"
+                                        : "border-gray-200 bg-white"
+                                        }`}
                                 />
 
                                 <button
@@ -458,55 +457,54 @@ export default function EditUserModal({
                         </div>
 
                         {/* Pump */}
-                        {role ===
-                            "manager" && (
-                                <div>
-                                    <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                                        Reassign Pump
-                                    </label>
+                        {(role === "manager" || role === "attendant") && (
+                            <div>
+                                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                                    Reassign Pump
+                                </label>
 
-                                    <select
-                                        name="pump_id"
-                                        value={
-                                            form.pump_id
-                                        }
-                                        onChange={
-                                            handleChange
-                                        }
-                                        className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                                    >
-                                        <option value="">
-                                            Keep Current Pump ({user.pump_name || "Unassigned"})
-                                        </option>
+                                <select
+                                    name="pump_id"
+                                    value={
+                                        form.pump_id
+                                    }
+                                    onChange={
+                                        handleChange
+                                    }
+                                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                                >
+                                    <option value="">
+                                        Keep Current Pump ({user.pump_name || "Unassigned"})
+                                    </option>
 
-                                        {pumps.map(
-                                            (pump) => (
-                                                <option
-                                                    key={
-                                                        pump.id
-                                                    }
-                                                    value={
-                                                        pump.id
-                                                    }
-                                                >
-                                                    {
-                                                        pump.pump_code
-                                                    }{" "}
-                                                    -{" "}
-                                                    {
-                                                        pump.pump_name
-                                                    }
-                                                </option>
-                                            )
-                                        )}
-                                    </select>
-                                    {errors.pump_id && (
-                                        <p className="text-red-500 text-xs mt-1.5">
-                                            {errors.pump_id}
-                                        </p>
+                                    {pumps.map(
+                                        (pump) => (
+                                            <option
+                                                key={
+                                                    pump.id
+                                                }
+                                                value={
+                                                    pump.id
+                                                }
+                                            >
+                                                {
+                                                    pump.pump_code
+                                                }{" "}
+                                                -{" "}
+                                                {
+                                                    pump.pump_name
+                                                }
+                                            </option>
+                                        )
                                     )}
-                                </div>
-                            )}
+                                </select>
+                                {errors.pump_id && (
+                                    <p className="text-red-500 text-xs mt-1.5">
+                                        {errors.pump_id}
+                                    </p>
+                                )}
+                            </div>
+                        )}
 
                         {/* Status */}
                         <div className="flex items-center justify-between py-1">

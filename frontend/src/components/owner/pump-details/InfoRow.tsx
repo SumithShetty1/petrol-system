@@ -1,7 +1,7 @@
 type Props = {
   icon: React.ReactNode;
   label: string;
-  value: string | number;
+  value: React.ReactNode;
 };
 
 export default function InfoRow({

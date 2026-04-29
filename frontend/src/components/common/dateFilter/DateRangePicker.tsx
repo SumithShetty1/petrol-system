@@ -22,16 +22,33 @@ export default function DateRangePicker({
   const today = new Date().toISOString().split("T")[0];
 
   return (
-    <div className={className}>
-      <div className="bg-gray-50 rounded-xl p-4 md:p-5 space-y-4 border border-gray-200">
+    <div className={`px-4 sm:px-6 ${className}`}>
+      <div
+        className="
+          bg-gray-50
+          rounded-2xl
+          p-4 sm:p-5 md:p-6
+          space-y-4 sm:space-y-5
+          border border-gray-200
+          shadow-sm
+        "
+      >
+        {/* Header */}
         <div className="flex items-center gap-2 text-gray-700">
-          <Calendar className="w-5 h-5 text-blue-500" />
-          <span className="font-medium">
+          <Calendar className="w-4 sm:w-5 h-4 sm:h-5 text-blue-500" />
+          <span className="text-sm sm:text-base font-semibold">
             Select Date Range
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Inputs */}
+        <div
+          className="
+            grid grid-cols-1
+            sm:grid-cols-2
+            gap-3 sm:gap-4
+          "
+        >
           <DateInput
             label="Start Date"
             value={startDate}
@@ -48,18 +65,56 @@ export default function DateRangePicker({
           />
         </div>
 
-        <div className="flex gap-3">
+        {/* Buttons */}
+        <div
+          className="
+            flex flex-col sm:flex-row
+            gap-2 sm:gap-3
+          "
+        >
           <button
             onClick={onSubmit}
             disabled={!startDate || !endDate}
-            className="flex-1 py-2.5 bg-blue-500 text-white rounded-lg font-medium hover:bg-blue-600 transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+            className="
+              w-full sm:flex-1
+
+              py-2.5 sm:py-3
+              text-sm sm:text-base
+              font-medium
+
+              bg-blue-500 text-white
+              rounded-lg
+
+              hover:bg-blue-600
+              active:scale-95
+
+              transition-all duration-200
+
+              disabled:bg-gray-300
+              disabled:cursor-not-allowed
+            "
           >
             Apply
           </button>
 
           <button
             onClick={onCancel}
-            className="flex-1 py-2.5 border border-gray-300 text-gray-600 rounded-lg font-medium hover:bg-gray-100 transition-colors"
+            className="
+              w-full sm:flex-1
+
+              py-2.5 sm:py-3
+              text-sm sm:text-base
+              font-medium
+
+              border border-gray-300
+              text-gray-600
+              rounded-lg
+
+              hover:bg-gray-100
+              active:scale-95
+
+              transition-all duration-200
+            "
           >
             Cancel
           </button>
@@ -85,8 +140,14 @@ function DateInput({
   max,
 }: InputProps) {
   return (
-    <div className="space-y-1">
-      <label className="text-xs md:text-sm text-gray-600">
+    <div className="space-y-1.5">
+      <label
+        className="
+          text-xs sm:text-sm
+          text-gray-600
+          font-medium
+        "
+      >
         {label}
       </label>
 
@@ -96,7 +157,25 @@ function DateInput({
         onChange={(e) => onChange(e.target.value)}
         min={min}
         max={max}
-        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none transition-colors text-sm"
+        className="
+          w-full
+
+          px-3 sm:px-4
+          py-2.5 sm:py-3
+
+          text-xs sm:text-sm
+
+          border border-gray-300
+          rounded-lg
+
+          bg-white
+
+          focus:outline-none
+          focus:border-blue-500
+          focus:ring-2 focus:ring-blue-100
+
+          transition-all duration-200
+        "
       />
     </div>
   );

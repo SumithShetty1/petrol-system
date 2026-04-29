@@ -5,22 +5,32 @@ type Props = {
   transactions: any[];
   title?: string;
   totalCount?: number;
+  currentPage?: number;
+  pageSize?: number;
   hasActiveFilters?: boolean;
   onClearFilters?: () => void;
   emptyMessage?: string;
   showHeader?: boolean;
+  isLoading?: boolean;
 };
 
 export default function TransactionTable({
   transactions,
   title = "Transaction History",
-  totalCount,
+  totalCount = 0,
+  currentPage = 1,
+  pageSize = 20,
   hasActiveFilters = false,
   onClearFilters,
   emptyMessage = "No transactions found",
   showHeader = true,
+  isLoading = false,
 }: Props) {
-  if (transactions.length === 0) {
+
+  // -----------------------------------
+  // EMPTY STATE
+  // -----------------------------------
+  if (!isLoading && transactions.length === 0) {
     return (
       <div className="bg-white rounded-2xl shadow-md overflow-hidden">
         {showHeader && (
@@ -46,16 +56,21 @@ export default function TransactionTable({
     );
   }
 
+  // -----------------------------------
+  // CALCULATE SERIAL OFFSET
+  // -----------------------------------
+  const startIndex = (currentPage - 1) * pageSize;
+
   return (
     <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+
+      {/* Header */}
       {showHeader && (
         <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
           <Calendar className="w-5 h-5 text-blue-500" />
-
           <h3 className="text-gray-900 font-semibold">
             {title}
           </h3>
-
         </div>
       )}
 
@@ -65,6 +80,7 @@ export default function TransactionTable({
           <thead className="bg-blue-500 text-white">
             <tr>
               <th className="px-3 py-3 text-center text-xs whitespace-nowrap">Sl No</th>
+              <th className="px-3 py-3 text-center text-xs whitespace-nowrap">Type</th>
               <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Name</th>
               <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Customer Mobile</th>
               <th className="px-3 py-3 text-left text-xs whitespace-nowrap">Fuel Type</th>
@@ -90,7 +106,7 @@ export default function TransactionTable({
               <TransactionTableRow
                 key={transaction.id}
                 transaction={transaction}
-                index={index}
+                index={startIndex + index + 1} // ✅ FIXED SERIAL NUMBER
               />
             ))}
           </tbody>
@@ -98,16 +114,28 @@ export default function TransactionTable({
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-50 px-4 py-3 border-t-2 border-blue-500">
-        <p className="text-xs text-gray-600">
-          Showing {transactions.length} transaction
-          {transactions.length !== 1 ? "s" : ""}
+      <div className="bg-gray-50 px-4 py-3 border-t-2 border-blue-500 flex flex-col gap-1 text-xs text-gray-600">
 
-          {totalCount && totalCount !== transactions.length &&
-            ` (filtered from ${totalCount})`}
+        <div>
+          Showing{" "}
+          <span className="font-medium">
+            {startIndex + 1}
+          </span>{" "}
+          to{" "}
+          <span className="font-medium">
+            {startIndex + transactions.length}
+          </span>{" "}
+          of{" "}
+          <span className="font-medium">
+            {totalCount}
+          </span>{" "}
+          transactions
+        </div>
 
-          {" • "}Scroll horizontally to view all columns
-        </p>
+        <div>
+          Page {currentPage} • Scroll horizontally to view all columns
+        </div>
+
       </div>
     </div>
   );

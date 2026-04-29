@@ -66,12 +66,13 @@ export default function DeleteUserModal({
 
     const handleDelete =
         async () => {
+            if (loading) return;
+
             setLoading(true);
             setApiError("");
 
             try {
-                const userId =
-                    user?.user_id;
+                const userId = user?.user_id || user?.id;
 
                 if (!userId) {
                     setApiError(
@@ -172,8 +173,9 @@ export default function DeleteUserModal({
                                     </p>
 
                                     <p className="text-gray-400 text-xs mt-0.5">
-                                        {user?.pump_name ||
-                                            "No pump assigned"}
+                                        {role === "manager" || role === "attendant"
+                                            ? user?.pump_name || "No pump assigned"
+                                            : "Owner Account"}
                                     </p>
                                 </div>
                             </div>
@@ -186,7 +188,9 @@ export default function DeleteUserModal({
                             </p>
 
                             <p className="text-amber-700 text-sm">
-                                Deleting this {role} will permanently remove the account and related access.
+                                {role === "owner"
+                                    ? "Deleting this owner may affect linked pumps and staff access."
+                                    : `Deleting this ${role} will permanently remove the account and related access.`}
                             </p>
                         </div>
 

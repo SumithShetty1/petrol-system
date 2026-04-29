@@ -33,10 +33,25 @@ export default function TransactionTableRow({
 
   return (
     <tr
-      className={`border-b border-gray-100 hover:bg-blue-50 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-gray-50"
-        }`}
+      className={`
+    border-b border-gray-100 hover:bg-blue-50 transition-colors
+    ${transaction.transaction_type === "reversal"
+          ? "bg-red-50"
+          : index % 2 === 0
+            ? "bg-white"
+            : "bg-gray-50"
+        }
+  `}
     >
-      <td className="px-3 py-3 text-center text-xs">{index + 1}</td>
+      <td className="px-3 py-3 text-center text-xs">{index}</td>
+
+      <td className="px-3 py-3 text-xs font-semibold whitespace-nowrap">
+        {transaction.transaction_type === "reversal" ? (
+          <span className="text-red-600">Reversal</span>
+        ) : (
+          <span className="text-gray-700">Normal</span>
+        )}
+      </td>
 
       <td className="px-3 py-3 text-xs font-medium whitespace-nowrap">
         {transaction.customer_name || "—"}

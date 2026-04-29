@@ -1,30 +1,30 @@
 import { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 
-import {
-  getManagers,
-  getEmployeeById,
-} from "../../services/employeeService";
-
-import { getAvailablePumps } from "../../services/pumpService";
-
 import PageHeader from "../../components/common/header/PageHeader";
 import PeopleList from "../../components/common/peopleList/PeopleList";
-import ManagerProfileView from "../../components/owner/managers/ManagerProfileView";
 
 import AddUserModal from "../../components/modals/user/AddUserModal";
 import EditUserModal from "../../components/modals/user/EditUserModal";
 import DeleteUserModal from "../../components/modals/user/DeleteUserModal";
 
-import { createManager, updateUser, deleteUser } from "../../services/authService";
+import OwnerProfileView from "../../components/admin/owners/OwnerProfileView";
+
+import {
+  createOwner,
+  updateUser,
+  deleteUser,
+  getOwners,
+  getOwnerById,
+} from "../../services/authService";
 
 import SearchBar from "../../components/common/search/SearchBar";
 
-export default function ManagersManagement() {
-  const [managers, setManagers] =
+export default function OwnersManagement() {
+  const [owners, setOwners] =
     useState<any[]>([]);
 
-  const [pumps, setPumps] = useState<any[]>([]);
+  const [search, setSearch] = useState("");
 
   const [loading, setLoading] =
     useState(true);
@@ -32,12 +32,8 @@ export default function ManagersManagement() {
   const [profileLoading, setProfileLoading] =
     useState(false);
 
-  const [
-    selectedManager,
-    setSelectedManager,
-  ] = useState<any>(null);
-
-  const [search, setSearch] = useState("");
+  const [selectedOwner, setSelectedOwner] =
+    useState<any>(null);
 
   const [showAddModal, setShowAddModal] =
     useState(false);
@@ -48,23 +44,23 @@ export default function ManagersManagement() {
   const [deleteModal, setDeleteModal] =
     useState(false);
 
-  const [editManager, setEditManager] =
+  const [editOwner, setEditOwner] =
     useState<any>(null);
 
-  const [deleteManagerData, setDeleteManagerData] =
+  const [deleteOwnerData, setDeleteOwnerData] =
     useState<any>(null);
 
   // -----------------------------------
-  // LOAD MANAGERS LIST
+  // LOAD OWNERS
   // -----------------------------------
-  const loadManagers = async () => {
+  const loadOwners = async () => {
     try {
       setLoading(true);
 
       const data =
-        await getManagers();
+        await getOwners();
 
-      setManagers(data);
+      setOwners(data);
     } catch (error) {
       console.error(error);
     } finally {
@@ -72,34 +68,24 @@ export default function ManagersManagement() {
     }
   };
 
-  const loadPumps = async () => {
-    try {
-      const data = await getAvailablePumps();
-      setPumps(data);
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
   useEffect(() => {
-    loadManagers();
-    loadPumps();
+    loadOwners();
   }, []);
 
   // -----------------------------------
-  // LOAD FULL MANAGER PROFILE
+  // LOAD OWNER PROFILE
   // -----------------------------------
-  const loadManagerDetails =
-    async (manager: any) => {
+  const loadOwnerDetails =
+    async (owner: any) => {
       try {
         setProfileLoading(true);
 
         const fullProfile =
-          await getEmployeeById(
-            manager.id
+          await getOwnerById(
+            owner.id
           );
 
-        setSelectedManager(
+        setSelectedOwner(
           fullProfile
         );
       } catch (error) {
@@ -109,20 +95,17 @@ export default function ManagersManagement() {
       }
     };
 
-  const filteredManagers = managers.filter((manager) => {
-    const searchValue = search.toLowerCase();
-
+  const filteredOwners = owners.filter((owner) => {
     const fullName =
-      `${manager.first_name || ""} ${manager.last_name || ""}`.toLowerCase();
+      `${owner.first_name || ""} ${owner.last_name || ""}`.toLowerCase();
 
-    const phone = (manager.username || "").toLowerCase();
+    const phone = (owner.username || "").toLowerCase();
 
-    const pump = (manager.pump_name || "").toLowerCase();
+    const searchValue = search.toLowerCase();
 
     return (
       fullName.includes(searchValue) ||
-      phone.includes(searchValue) ||
-      pump.includes(searchValue)
+      phone.includes(searchValue)
     );
   });
 
@@ -130,29 +113,20 @@ export default function ManagersManagement() {
   // ACTIONS
   // -----------------------------------
   const handleEditClick =
-    (manager: any) => {
-      setEditManager(
-        manager
-      );
-
+    (owner: any) => {
+      setEditOwner(owner);
       setEditModal(true);
     };
 
   const handleDeleteClick =
-    (manager: any) => {
-      setDeleteManagerData(
-        manager
-      );
-
+    (owner: any) => {
+      setDeleteOwnerData(owner);
       setDeleteModal(true);
     };
 
-  const handleBack =
-    () => {
-      setSelectedManager(
-        null
-      );
-    };
+  const handleBack = () => {
+    setSelectedOwner(null);
+  };
 
   // -----------------------------------
   // PAGE LOADING
@@ -161,7 +135,7 @@ export default function ManagersManagement() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-gray-500">
-          Loading managers...
+          Loading owners...
         </div>
       </div>
     );
@@ -183,17 +157,11 @@ export default function ManagersManagement() {
   // -----------------------------------
   // PROFILE VIEW
   // -----------------------------------
-  if (
-    selectedManager
-  ) {
+  if (selectedOwner) {
     return (
-      <ManagerProfileView
-        manager={
-          selectedManager
-        }
-        onBack={
-          handleBack
-        }
+      <OwnerProfileView
+        owner={selectedOwner}
+        onBack={handleBack}
       />
     );
   }
@@ -204,14 +172,15 @@ export default function ManagersManagement() {
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <PageHeader
-        title="Managers"
-        subtitle={`${managers.length} manager${managers.length !== 1 ? "s" : ""}`}
+        title="Owners"
+        subtitle={`${owners.length} owner${owners.length !== 1
+          ? "s"
+          : ""
+          }`}
         rightAction={
           <button
             onClick={() =>
-              setShowAddModal(
-                true
-              )
+              setShowAddModal(true)
             }
             className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-600 shadow-md hover:bg-gray-100 transition-colors"
           >
@@ -223,25 +192,23 @@ export default function ManagersManagement() {
       <SearchBar
         value={search}
         onChange={setSearch}
-        placeholder="Search managers..."
-        resultCount={filteredManagers.length}
+        placeholder="Search owners..."
+        resultCount={filteredOwners.length}
       />
 
       <PeopleList
-        users={filteredManagers.map((item) => ({
+        users={filteredOwners.map((item) => ({
           ...item,
-          subtitle:
-            item.pump_name ||
-            "No Pump Assigned",
-        })
-        )}
+          phone: item.username,
+          subtitle: item.is_active ? "Active" : "Inactive",
+        }))}
         emptyText={
           search
-            ? "No matching managers found"
-            : "No managers found"
+            ? "No matching owners found"
+            : "No owners found"
         }
         onSelect={
-          loadManagerDetails
+          loadOwnerDetails
         }
         onEdit={
           handleEditClick
@@ -251,6 +218,7 @@ export default function ManagersManagement() {
         }
       />
 
+      {/* ADD OWNER */}
       <AddUserModal
         isOpen={
           showAddModal
@@ -260,33 +228,33 @@ export default function ManagersManagement() {
             false
           )
         }
-        onSuccess={async () => {
-          await loadManagers();
-          await loadPumps();
-        }}
-        role="manager"
-        onSubmit={
-          createManager
+        onSuccess={
+          loadOwners
         }
-        pumps={pumps}
+        role="owner"
+        onSubmit={
+          createOwner
+        }
       />
 
+      {/* EDIT OWNER */}
       <EditUserModal
         isOpen={editModal}
         onClose={() => {
           setEditModal(false);
-          setEditManager(null);
+          setEditOwner(null);
         }}
-        onSuccess={async () => {
-          await loadManagers();
-          await loadPumps();
-        }}
-        role="manager"
-        user={editManager}
-        onSubmit={updateUser}
-        pumps={pumps}
+        onSuccess={
+          loadOwners
+        }
+        role="owner"
+        user={editOwner}
+        onSubmit={
+          updateUser
+        }
       />
 
+      {/* DELETE OWNER */}
       <DeleteUserModal
         isOpen={
           deleteModal
@@ -295,18 +263,19 @@ export default function ManagersManagement() {
           setDeleteModal(
             false
           );
-          setDeleteManagerData(
+          setDeleteOwnerData(
             null
           );
         }}
-        onSuccess={async () => {
-          await loadManagers();
-          await loadPumps();
-        }}
-        onSubmit={deleteUser}
-        role="manager"
+        onSuccess={
+          loadOwners
+        }
+        onSubmit={
+          deleteUser
+        }
+        role="owner"
         user={
-          deleteManagerData
+          deleteOwnerData
         }
       />
     </div>

@@ -11,6 +11,7 @@ type Props = {
   onSubmit: () => void;
   isValid: boolean;
   isLoading: boolean;
+  error?: string;
 };
 
 export default function LoginForm({
@@ -21,24 +22,42 @@ export default function LoginForm({
   onSubmit,
   isValid,
   isLoading,
+  error
 }: Props) {
   return (
-    <div className="bg-white rounded-t-[3rem] pt-8 pb-12 px-6 -mx-6">
+    <div
+      className="
+        bg-white
+        rounded-3xl md:rounded-[2rem]
+        shadow-xl
+        px-5 sm:px-6 md:px-8
+        pt-6 sm:pt-8
+        pb-8 sm:pb-10 md:pb-12
+      "
+    >
       <FormTitle title="Sign in" />
 
-      <div className="mb-6">
+      {error && (
+        <div className="mt-4 mb-2 px-4 py-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
+      <div className="mt-6 sm:mt-8">
         <PhoneInput phone={phone} onChange={onPhoneChange} />
       </div>
 
-      <div className="mb-12 md:mb-16">
+      <div className="mt-5 sm:mt-6 md:mt-8">
         <PasswordInput password={password} onChange={onPasswordChange} />
       </div>
 
-      <LoginButton
-        onClick={onSubmit}
-        disabled={!isValid}
-        loading={isLoading}
-      />
+      <div className="mt-8 sm:mt-10 md:mt-12">
+        <LoginButton
+          onClick={onSubmit}
+          disabled={!isValid}
+          loading={isLoading}
+        />
+      </div>
     </div>
   );
 }

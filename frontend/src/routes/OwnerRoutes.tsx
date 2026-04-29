@@ -8,6 +8,7 @@ import OwnerPumpDetails from "../pages/owner/OwnerPumpDetails";
 import ManagersManagement from "../pages/owner/ManagersManagement";
 import OwnerTransactions from "../pages/owner/OwnerTransactions";
 import OwnerProfile from "../pages/owner/OwnerProfile";
+import AttendantsManagement from "../pages/owner/AttendantsManagement";
 
 export default function OwnerRoutes() {
   return (
@@ -26,6 +27,7 @@ export default function OwnerRoutes() {
         <Route path="pumps" element={<OwnerPumps />} />
         <Route path="pumps/:pumpCode" element={<OwnerPumpDetails />} />
         <Route path="managers" element={<ManagersManagement />} /> 
+        <Route path="attendants" element={<AttendantsManagement />} />
         <Route path="transactions" element={<OwnerTransactions />} />
         <Route path="profile" element={<OwnerProfile />} />
       </Route>
