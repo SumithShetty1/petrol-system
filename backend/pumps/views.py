@@ -13,6 +13,8 @@ from .serializers import (
     PumpWriteSerializer,
 )
 
+from django.db import transaction
+from fuel.models import FuelRate
 
 class PumpViewSet(viewsets.ModelViewSet):
 
@@ -132,4 +134,20 @@ class PumpViewSet(viewsets.ModelViewSet):
         serializer = PumpMiniSerializer(queryset, many=True)
         return Response(serializer.data)
     
-    
+    @transaction.atomic
+    def perform_create(self, serializer):
+        pump = serializer.save()
+
+        # Create default fuel rates
+        FuelRate.objects.bulk_create([
+            FuelRate(
+                pump=pump,
+                fuel_type="petrol",
+                price_per_litre=0
+            ),
+            FuelRate(
+                pump=pump,
+                fuel_type="diesel",
+                price_per_litre=0
+            ),
+        ])

@@ -40,7 +40,11 @@ export default function AdminTransactions() {
 
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
   const [showFilters, setShowFilters] = useState(false);
@@ -57,14 +61,14 @@ export default function AdminTransactions() {
   const skipNextFetch = useRef(false);
 
   // -----------------------------------
-  // FETCH TRANSACTIONS (SINGLE SOURCE)
+  // FETCH TRANSACTIONS
   // -----------------------------------
   const fetchTransactions = async () => {
     const requestId = ++requestIdRef.current;
 
     try {
       setTableLoading(true);
-      setError("");
+      setTableError(null);
 
       const res = await getTransactions(
         dateFilter,
@@ -83,9 +87,13 @@ export default function AdminTransactions() {
       setTotalCount(res.total);
       setHasNext(res.hasNext);
 
-    } catch (error) {
-      console.error(error);
-      setError("Failed to load transactions.");
+    } catch (err: any) {
+      console.error(err);
+
+      setTableError(
+        err?.response?.data?.detail ||
+        "Failed to load transactions"
+      );
     } finally {
       if (requestId === requestIdRef.current) {
         setTableLoading(false);
@@ -96,44 +104,40 @@ export default function AdminTransactions() {
   // -----------------------------------
   // INITIAL LOAD
   // -----------------------------------
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setPageError(null);
+
+      const [txnRes, pumpsData] = await Promise.all([
+        getTransactions("today", 1, 20, "", "", undefined, "all", "all"),
+        getPumps(),
+      ]);
+
+      setTransactions(txnRes.data);
+      setTotalCount(txnRes.total);
+      setHasNext(txnRes.hasNext);
+      setPumps(pumpsData);
+
+    } catch (err: any) {
+      console.error(err);
+
+      setPageError(
+        err?.response?.data?.detail ||
+        "Failed to load page data"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [txnRes, pumpsData] = await Promise.all([
-          getTransactions(
-            "today",
-            1,
-            20,
-            "",
-            "",
-            undefined,
-            "all",
-            "all"
-          ),
-          getPumps(),
-        ]);
-
-        setTransactions(txnRes.data);
-        setTotalCount(txnRes.total);
-        setHasNext(txnRes.hasNext);
-        setPumps(pumpsData);
-
-      } catch (error) {
-        console.error(error);
-        setError("Failed to load page data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadInitialData();
   }, []);
 
+
   // -----------------------------------
-  // AUTO FETCH (MAIN DRIVER)
+  // AUTO FETCH
   // -----------------------------------
   useEffect(() => {
     if (loading) return;
@@ -151,11 +155,10 @@ export default function AdminTransactions() {
   }, [dateFilter, pumpFilter, fuelTypeFilter, page]);
 
   // -----------------------------------
-  // DATE FILTER
+  // FILTERS
   // -----------------------------------
   const handleDateFilterChange = (filter: DateFilter) => {
-    skipNextFetch.current = false;
-
+    setValidationError(null);
     setDateFilter(filter);
 
     if (filter === "custom") {
@@ -173,13 +176,15 @@ export default function AdminTransactions() {
   // CUSTOM DATE SUBMIT
   // -----------------------------------
   const handleCustomDateSubmit = () => {
+    setValidationError(null);
+
     if (!startDate || !endDate) {
-      setError("Please select both dates.");
+      setValidationError("Please select both dates.");
       return;
     }
 
     if (endDate < startDate) {
-      setError("End date cannot be before start date.");
+      setValidationError("End date cannot be before start date.");
       return;
     }
 
@@ -228,8 +233,13 @@ export default function AdminTransactions() {
   // -----------------------------------
   // Download Excel
   // -----------------------------------
+  // -----------------------------------
+  // EXPORT
+  // -----------------------------------
   const handleDownloadExcel = async () => {
     try {
+      setExportError(null);
+
       const blob = await exportTransactions(
         dateFilter,
         startDate,
@@ -247,9 +257,13 @@ export default function AdminTransactions() {
       document.body.appendChild(link);
       link.click();
       link.remove();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert("Failed to download Excel");
+
+      setExportError(
+        err?.response?.data?.detail ||
+        "Failed to export Excel"
+      );
     }
   };
 
@@ -262,6 +276,24 @@ export default function AdminTransactions() {
         <div className="text-gray-500">
           Loading transactions...
         </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -327,11 +359,12 @@ export default function AdminTransactions() {
         }
       />
 
-      {error && (
-        <div className="px-6 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm">
-            {error}
-          </div>
+      {/* ERRORS */}
+      {(validationError || tableError || exportError) && (
+        <div className="px-6 mt-4 text-red-600 text-sm space-y-1">
+          {validationError && <div>{validationError}</div>}
+          {tableError && <div>{tableError}</div>}
+          {exportError && <div>{exportError}</div>}
         </div>
       )}
 
@@ -368,11 +401,6 @@ export default function AdminTransactions() {
       )}
 
       <div className="px-6 mt-4">
-        {tableLoading && (
-          <div className="mb-3 text-sm text-gray-500">
-            Refreshing transactions...
-          </div>
-        )}
 
         <TransactionTable
           transactions={transactions}

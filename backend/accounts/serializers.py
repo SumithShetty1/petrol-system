@@ -25,7 +25,7 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
-            "username",
+            "username",     # Used as phone number
             "password",
             "role",
             "first_name",
@@ -41,7 +41,7 @@ class UserSerializer(serializers.ModelSerializer):
         }
 
     # -----------------------------------
-    # PHONE VALIDATION
+    # PHONE VALIDATION (USERNAME)
     # -----------------------------------
     def validate_username(self, value):
         value = value.strip()
@@ -99,14 +99,14 @@ class UserSerializer(serializers.ModelSerializer):
             raise PermissionDenied(f"You cannot create {target_role}")
 
         # -------------------------
-        # CREATE USER
+        # CREATE USER OBJECT
         # -------------------------
         user = User(**validated_data)
         user.set_password(password)
         user.save()
 
         # -------------------------
-        # EMPLOYEE CREATION
+        # EMPLOYEE CREATION FLOW
         # -------------------------
         if target_role in ["manager", "attendant"]:
 

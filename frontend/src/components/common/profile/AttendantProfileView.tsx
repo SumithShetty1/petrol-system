@@ -17,6 +17,7 @@ type Props = {
   onCustomDateSubmit: () => void;
   onCancelCustomDate: () => void;
   showPerformance?: boolean;
+  statsError?: string | null;
 };
 
 export default function AttendantProfileView({
@@ -33,6 +34,8 @@ export default function AttendantProfileView({
   onCustomDateSubmit,
   onCancelCustomDate,
   showPerformance = true,
+  statsError,
+
 }: Props) {
   return (
     <div className="min-h-screen bg-gray-50 pb-6 md:pb-8">
@@ -57,20 +60,27 @@ export default function AttendantProfileView({
                 />
               </div>
 
-              {/* RIGHT */}
+              {/* RIGHT - DASHBOARD */}
               <div className="lg:col-span-2">
-                <PerformanceDashboard
-                  stats={stats}
-                  range={dateFilter}
-                  showCustomDatePicker={showCustomDatePicker}
-                  startDate={startDate}
-                  endDate={endDate}
-                  onChangeFilter={onFilterChange}
-                  onStartDateChange={onStartDateChange}
-                  onEndDateChange={onEndDateChange}
-                  onCustomDateSubmit={onCustomDateSubmit}
-                  onCancelCustomDate={onCancelCustomDate}
-                />
+
+
+                {/* SUCCESS STATE */}
+               
+                  <PerformanceDashboard
+                    stats={stats}
+                    error={statsError}
+                    range={dateFilter}
+                    showCustomDatePicker={showCustomDatePicker}
+                    startDate={startDate}
+                    endDate={endDate}
+                    onChangeFilter={onFilterChange}
+                    onStartDateChange={onStartDateChange}
+                    onEndDateChange={onEndDateChange}
+                    onCustomDateSubmit={onCustomDateSubmit}
+                    onCancelCustomDate={onCancelCustomDate}
+                  />
+
+
               </div>
             </div>
           ) : (

@@ -9,12 +9,18 @@ from .serializers import FuelRateSerializer
 from employees.models import Employee
 
 
+# -----------------------------------
+# FUEL RATE VIEWSET
+# -----------------------------------
 class FuelRateViewSet(viewsets.ModelViewSet):
    
     queryset = FuelRate.objects.all()
     serializer_class = FuelRateSerializer
     permission_classes = [IsAuthenticated]
 
+    # -----------------------------------
+    # QUERYSET (ROLE-BASED FILTERING)
+    # -----------------------------------
     def get_queryset(self):
         user = self.request.user
 
@@ -37,7 +43,9 @@ class FuelRateViewSet(viewsets.ModelViewSet):
 
         return FuelRate.objects.none()
     
-
+    # -----------------------------------
+    # PERMISSIONS
+    # -----------------------------------
     def get_permissions(self):
         if self.action in [
             "create",
@@ -52,6 +60,9 @@ class FuelRateViewSet(viewsets.ModelViewSet):
 
         return [IsAuthenticated()]
     
+    # -----------------------------------
+    # CREATE
+    # -----------------------------------
     def perform_create(self, serializer):
         user = self.request.user
 
@@ -71,6 +82,9 @@ class FuelRateViewSet(viewsets.ModelViewSet):
 
             serializer.save()
 
+    # -----------------------------------
+    # UPDATE
+    # -----------------------------------
     def perform_update(self, serializer):
         user = self.request.user
         fuel_rate = self.get_object()

@@ -38,8 +38,9 @@ export default function PumpTransactions() {
   const [hasNext, setHasNext] = useState(false);
 
   const [loading, setLoading] = useState(true);
-  const [tableLoading, setTableLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [filterError, setFilterError] = useState<string | null>(null);
 
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
   const [showFilters, setShowFilters] = useState(false);
@@ -55,14 +56,13 @@ export default function PumpTransactions() {
   const skipNextFetch = useRef(false);
 
   // -----------------------------------
-  // FETCH TRANSACTIONS (SINGLE SOURCE)
+  // FETCH TRANSACTIONS
   // -----------------------------------
   const fetchTransactions = async () => {
     const requestId = ++requestIdRef.current;
 
     try {
-      setTableLoading(true);
-      setError("");
+      setTableError(null);
 
       const res = await getTransactions(
         dateFilter,
@@ -72,7 +72,7 @@ export default function PumpTransactions() {
         endDate,
         attendantFilter,
         fuelTypeFilter,
-        undefined // no pump filter here
+        undefined
       );
 
       if (requestId !== requestIdRef.current) return;
@@ -83,50 +83,37 @@ export default function PumpTransactions() {
 
     } catch (error) {
       console.error(error);
-      setError("Failed to load transactions.");
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setTableLoading(false);
-      }
+      setTableError("Failed to load transactions.");
     }
   };
 
   // -----------------------------------
   // INITIAL LOAD
   // -----------------------------------
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setPageError(null);
+
+      const [txnRes, attendantsData] = await Promise.all([
+        getTransactions("today", 1, 20, "", "", "all", "all", undefined),
+        getAttendants(),
+      ]);
+
+      setTransactions(txnRes.data);
+      setTotalCount(txnRes.total);
+      setHasNext(txnRes.hasNext);
+      setAttendants(attendantsData);
+
+    } catch (error) {
+      console.error(error);
+      setPageError("Failed to load page data.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [txnRes, attendantsData] = await Promise.all([
-          getTransactions(
-            "today",
-            1,
-            20,
-            "",
-            "",
-            "all",
-            "all",
-            undefined
-          ),
-          getAttendants(),
-        ]);
-
-        setTransactions(txnRes.data);
-        setTotalCount(txnRes.total);
-        setHasNext(txnRes.hasNext);
-        setAttendants(attendantsData);
-
-      } catch (error) {
-        console.error(error);
-        setError("Failed to load page data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadInitialData();
   }, []);
 
@@ -136,9 +123,7 @@ export default function PumpTransactions() {
   useEffect(() => {
     if (loading) return;
 
-    if (dateFilter === "custom" && (!startDate || !endDate)) {
-      return;
-    }
+    if (dateFilter === "custom" && (!startDate || !endDate)) return;
 
     if (skipNextFetch.current) {
       skipNextFetch.current = false;
@@ -153,7 +138,7 @@ export default function PumpTransactions() {
   // -----------------------------------
   const handleDateFilterChange = (filter: DateFilter) => {
     skipNextFetch.current = false;
-    
+
     setDateFilter(filter);
 
     if (filter === "custom") {
@@ -172,14 +157,16 @@ export default function PumpTransactions() {
   // -----------------------------------
   const handleCustomDateSubmit = () => {
     if (!startDate || !endDate) {
-      setError("Please select both dates.");
+      setFilterError("Please select both dates.");
       return;
     }
 
     if (endDate < startDate) {
-      setError("End date cannot be before start date.");
+      setFilterError("End date cannot be before start date.");
       return;
     }
+
+    setFilterError(null);
 
     setDateFilter("custom");
     setPage(1);
@@ -198,6 +185,7 @@ export default function PumpTransactions() {
     setStartDate("");
     setEndDate("");
     setPage(1);
+    setFilterError(null);
   };
 
   // -----------------------------------
@@ -224,14 +212,29 @@ export default function PumpTransactions() {
   };
 
   // -----------------------------------
-  // LOADING UI
+  // LOADING (BLOCKING)
   // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading transactions...
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading transactions...
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -253,11 +256,20 @@ export default function PumpTransactions() {
         }
       />
 
-      {error && (
-        <div className="px-6 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm">
-            {error}
-          </div>
+      {/* FILTER ERROR */}
+      {filterError && (
+        <div className="px-6 mt-4 text-red-600 text-sm">
+          {filterError}
+        </div>
+      )}
+
+      {/* TABLE ERROR */}
+      {tableError && (
+        <div className="px-6 mt-4 bg-red-50 border text-red-600 rounded-lg p-3 flex justify-between">
+          <span>{tableError}</span>
+          <button onClick={fetchTransactions} className="text-blue-600">
+            Retry
+          </button>
         </div>
       )}
 
@@ -294,18 +306,12 @@ export default function PumpTransactions() {
       )}
 
       <div className="px-6 mt-4">
-        {tableLoading && (
-          <div className="mb-3 text-sm text-gray-500">
-            Refreshing transactions...
-          </div>
-        )}
 
         <TransactionTable
           transactions={transactions}
           totalCount={totalCount}
           currentPage={page}
           pageSize={20}
-          isLoading={tableLoading}
           hasActiveFilters={
             attendantFilter !== "all" ||
             fuelTypeFilter !== "all"

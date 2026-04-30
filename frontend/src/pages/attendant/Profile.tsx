@@ -25,55 +25,106 @@ export default function Profile() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  const loadDashboard = async (filter: string, customStart?: string, customEnd?: string) => {
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+
+  // -----------------------------------
+  // LOAD DASHBOARD
+  // -----------------------------------
+  const loadDashboard = async (
+    filter: DateFilter,
+    customStart?: string,
+    customEnd?: string
+  ) => {
     try {
-      const data = await getAttendantDashboard(filter, customStart, customEnd);
+      setStatsError(null);
+
+      const data = await getAttendantDashboard(
+        filter,
+        customStart,
+        customEnd
+      );
+
       setStats(data);
-    } catch (error) {
-      console.error("Error loading dashboard:", error);
+    } catch (err: any) {
+      console.error(err);
+
+      setStatsError(
+        err?.response?.data?.detail ||
+        "Failed to load dashboard data"
+      );
     }
   };
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const p = await getProfile();
-        setProfile(p);
-        await loadDashboard(range);
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // -----------------------------------
+  // LOAD PROFILE + INITIAL DASHBOARD
+  // -----------------------------------
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setProfileError(null);
 
-    load();
+      const p = await getProfile();
+      setProfile(p);
+
+      await loadDashboard("today");
+    } catch (err: any) {
+      console.error(err);
+
+      setProfileError(
+        err?.response?.data?.detail ||
+        "Failed to load profile. Please try again."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  useEffect(() => {
+    loadData();
   }, []);
 
+  // -----------------------------------
+  // FILTER CHANGE
+  // -----------------------------------
   const changeFilter = async (filter: DateFilter) => {
     setRange(filter);
+    setStatsError(null);
 
     if (filter === "custom") {
       setShowCustomDatePicker(true);
-    } else {
-      setShowCustomDatePicker(false);
-      await loadDashboard(filter);
+      return;
     }
+
+    setShowCustomDatePicker(false);
+    await loadDashboard(filter);
   };
 
+  // -----------------------------------
+  // CUSTOM DATE SUBMIT
+  // -----------------------------------
   const handleCustomDateSubmit = async () => {
-    if (startDate && endDate) {
-      await loadDashboard("custom", startDate, endDate);
-      setShowCustomDatePicker(false);
+    if (!startDate || !endDate) {
+      setStatsError("Please select both start and end date");
+      return;
     }
+
+    await loadDashboard("custom", startDate, endDate);
+    setShowCustomDatePicker(false);
   };
 
-  const handleCancelCustomDate = () => {
+  // -----------------------------------
+  // CANCEL CUSTOM DATE
+  // -----------------------------------
+  const handleCancelCustomDate = async () => {
     setShowCustomDatePicker(false);
     setRange("today");
-    loadDashboard("today");
     setStartDate("");
     setEndDate("");
+
+    await loadDashboard("today");
   };
 
   const handleLogout = () => {
@@ -89,10 +140,22 @@ export default function Profile() {
     );
   }
 
-  if (!profile || !stats) {
+  // -----------------------------------
+  // PROFILE ERROR (BLOCK PAGE)
+  // -----------------------------------
+  if (profileError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500 text-lg">No data available</div>
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="text-red-500 text-md text-center">
+          {profileError}
+        </div>
+
+        <button
+          onClick={loadData}
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -110,10 +173,29 @@ export default function Profile() {
               <ProfileCard profile={profile} onLogout={handleLogout} showLogout={true} showManagerInfo={true} />
             </div>
 
-            {/* Performance Dashboard - Right Column */}
+            {/* DASHBOARD */}
             <div className="lg:col-span-2">
+
+              {/* Dashboard Error */}
+              {statsError && (
+                <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 flex justify-between">
+                  <span>{statsError}</span>
+                  <button
+                    onClick={() =>
+                      range === "custom"
+                        ? loadDashboard("custom", startDate, endDate)
+                        : loadDashboard(range)
+                    }
+                    className="text-blue-600 font-medium"
+                  >
+                    Retry
+                  </button>
+                </div>
+              )}
+
               <PerformanceDashboard
                 stats={stats}
+                error={statsError}
                 range={range}
                 showCustomDatePicker={showCustomDatePicker}
                 startDate={startDate}
@@ -125,6 +207,7 @@ export default function Profile() {
                 onCancelCustomDate={handleCancelCustomDate}
               />
             </div>
+
           </div>
         </div>
       </div>

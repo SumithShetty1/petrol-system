@@ -117,8 +117,14 @@ class TransactionAdmin(admin.ModelAdmin):
         "created_at",
     )
 
+    # -----------------------------------
+    # BULK ACTIONS
+    # -----------------------------------
     actions = ["export_as_csv", "reverse_transactions"]
 
+    # -----------------------------------
+    # FORM GROUPING
+    # -----------------------------------
     fieldsets = (
         ("Relations", {
             "fields": (

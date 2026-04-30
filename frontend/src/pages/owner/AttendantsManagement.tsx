@@ -50,70 +50,121 @@ export default function AttendantsManagement() {
   const [deleteAttendantData, setDeleteAttendantData] =
     useState<any>(null);
 
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [pumpError, setPumpError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   // -----------------------------------
-  // LOAD ATTENDANTS
+  // INITIAL LOAD (BOTH)
   // -----------------------------------
-  const loadAttendants = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
-      const data = await getAttendants();
-      setAttendants(data);
-    } catch (error) {
-      console.error(error);
+      setPageError(null);
+
+      const [attendantsData, pumpsData] = await Promise.all([
+        getAttendants(),
+        getPumps(),
+      ]);
+
+      setAttendants(attendantsData);
+      setPumps(pumpsData);
+
+    } catch (err: any) {
+      console.error(err);
+      setPageError(
+        err?.response?.data?.detail ||
+        "Failed to load page data"
+      );
     } finally {
       setLoading(false);
     }
   };
 
   // -----------------------------------
-  // LOAD PUMPS
+  // LOAD ATTENDANTS ONLY
+  // -----------------------------------
+  const loadAttendants = async () => {
+    try {
+      setListError(null);
+
+      const data = await getAttendants();
+      setAttendants(data);
+
+    } catch (err: any) {
+      console.error(err);
+      setListError(
+        err?.response?.data?.detail ||
+        "Failed to load attendants"
+      );
+    }
+  };
+
+  // -----------------------------------
+  // LOAD PUMPS ONLY
   // -----------------------------------
   const loadPumps = async () => {
     try {
+      setPumpError(null);
+
       const data = await getPumps();
       setPumps(data);
-    } catch (error) {
-      console.error(error);
+
+    } catch (err: any) {
+      console.error(err);
+      setPumpError(
+        err?.response?.data?.detail ||
+        "Failed to load pumps"
+      );
     }
   };
 
   useEffect(() => {
-    loadAttendants();
-    loadPumps();
+    loadInitialData();
   }, []);
 
   // -----------------------------------
-  // OPEN PROFILE
+  // LOAD PROFILE
   // -----------------------------------
   const loadAttendantDetails = async (attendant: any) => {
     try {
       setProfileLoading(true);
+      setProfileError(null);
 
-      const fullProfile = await getEmployeeById(
-        attendant.id
-      );
-
+      const fullProfile = await getEmployeeById(attendant.id);
       setSelectedAttendant(fullProfile);
-    } catch (error) {
-      console.error(error);
+
+    } catch (err: any) {
+      console.error(err);
+      setProfileError(
+        err?.response?.data?.detail ||
+        "Failed to load profile"
+      );
     } finally {
       setProfileLoading(false);
     }
   };
 
+  // -----------------------------------
+  // FILTER
+  // -----------------------------------
   const filteredAttendants = attendants.filter((attendant) => {
-    const searchValue = search.toLowerCase();
+    const q = search.toLowerCase();
 
-    const fullName = `${attendant.first_name || ""} ${attendant.last_name || ""}`.toLowerCase();
+    const fullName =
+      `${attendant.first_name || ""} ${attendant.last_name || ""}`.toLowerCase();
+
     const phone = (attendant.username || "").toLowerCase();
     const pump = (attendant.pump_name || "").toLowerCase();
 
     return (
-      fullName.includes(searchValue) ||
-      phone.includes(searchValue) ||
-      pump.includes(searchValue)
+      fullName.includes(q) ||
+      phone.includes(q) ||
+      pump.includes(q)
     );
   });
+
 
   // -----------------------------------
   // BACK
@@ -139,24 +190,30 @@ export default function AttendantsManagement() {
   };
 
   // -----------------------------------
-  // LOADING
+  // INITIAL LOADING
   // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading attendants...
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading attendants...
       </div>
     );
   }
 
-  if (profileLoading) {
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading profile...
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -166,21 +223,35 @@ export default function AttendantsManagement() {
   // -----------------------------------
   if (selectedAttendant) {
     return (
-      <AttendantProfileView
-        attendant={selectedAttendant}
-        stats={null}
-        dateFilter={"today"}
-        showCustomDatePicker={false}
-        startDate=""
-        endDate=""
-        onBack={handleBackToList}
-        onFilterChange={() => { }}
-        onStartDateChange={() => { }}
-        onEndDateChange={() => { }}
-        onCustomDateSubmit={() => { }}
-        onCancelCustomDate={() => { }}
-        showPerformance={false}
-      />
+      <>
+        {profileError && (
+          <div className="p-3 text-red-600 text-center">
+            {profileError}
+          </div>
+        )}
+
+        {profileLoading && (
+          <div className="text-center py-3 text-gray-500">
+            Loading profile...
+          </div>
+        )}
+
+        <AttendantProfileView
+          attendant={selectedAttendant}
+          stats={null}
+          dateFilter={"today"}
+          showCustomDatePicker={false}
+          startDate=""
+          endDate=""
+          onBack={handleBackToList}
+          onFilterChange={() => { }}
+          onStartDateChange={() => { }}
+          onEndDateChange={() => { }}
+          onCustomDateSubmit={() => { }}
+          onCancelCustomDate={() => { }}
+          showPerformance={false}
+        />
+      </>
     );
   }
 
@@ -202,6 +273,26 @@ export default function AttendantsManagement() {
           </button>
         }
       />
+
+      {/* LIST ERROR */}
+      {listError && (
+        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl flex justify-between">
+          <span>{listError}</span>
+          <button onClick={loadAttendants} className="text-blue-600">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* PUMP ERROR */}
+      {pumpError && (
+        <div className="mx-4 mt-2 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl flex justify-between">
+          <span>{pumpError}</span>
+          <button onClick={loadPumps} className="text-blue-600">
+            Retry
+          </button>
+        </div>
+      )}
 
       <SearchBar
         value={search}

@@ -11,6 +11,9 @@ import {
   UserCheck,
 } from "lucide-react";
 
+// -----------------------------------
+// ATTENDANT NAVIGATION
+// -----------------------------------
 export const attendantNav = [
   {
     label: "Transaction",
@@ -24,6 +27,9 @@ export const attendantNav = [
   },
 ];
 
+// -----------------------------------
+// MANAGER NAVIGATION
+// -----------------------------------
 export const managerNav = [
   {
     label: "Dashboard",
@@ -52,6 +58,9 @@ export const managerNav = [
   },
 ];
 
+// -----------------------------------
+// OWNER NAVIGATION
+// -----------------------------------
 export const ownerNav = [
   {
     label: "Dashboard",
@@ -85,6 +94,9 @@ export const ownerNav = [
   },
 ];
 
+// -----------------------------------
+// ADMIN NAVIGATION
+// -----------------------------------
 export const adminNav = [
   {
     label: "Dashboard",

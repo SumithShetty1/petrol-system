@@ -62,7 +62,7 @@ class EmployeeBaseSerializer(serializers.ModelSerializer):
     )
     
     # -----------------------------------
-    # OWNER
+    # OWNER NAME
     # -----------------------------------
     def get_owner_name(self, obj):
         if obj.owner:
@@ -73,7 +73,7 @@ class EmployeeBaseSerializer(serializers.ModelSerializer):
         return None
 
     # -----------------------------------
-    # MANAGER
+    # MANAGER NAME
     # -----------------------------------
     def get_manager_name(self, obj):
         if (
@@ -93,7 +93,6 @@ class EmployeeBaseSerializer(serializers.ModelSerializer):
 
 # -----------------------------------
 # LIST SERIALIZER
-# attendants / managers / employee list
 # -----------------------------------
 class EmployeeListSerializer(EmployeeBaseSerializer):
 
@@ -114,7 +113,6 @@ class EmployeeListSerializer(EmployeeBaseSerializer):
 
 # -----------------------------------
 # PROFILE SERIALIZER
-# manager / attendant settings page
 # -----------------------------------
 class EmployeeProfileSerializer(EmployeeBaseSerializer):
 

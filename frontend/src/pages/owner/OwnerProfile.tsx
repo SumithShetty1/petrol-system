@@ -15,19 +15,28 @@ export default function OwnerProfile() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+   const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getMyProfile();
+      setProfile(data);
+    } catch (err: any) {
+      console.error(err);
+
+      setError(
+        err?.response?.data?.detail ||
+        "Failed to load profile"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const data = await getMyProfile();
-        setProfile(data);
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadProfile();
   }, []);
 
@@ -42,6 +51,26 @@ export default function OwnerProfile() {
         <div className="text-gray-500 text-lg">
           Loading...
         </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // ERROR STATE
+  // -----------------------------------
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="text-red-500 text-md text-center">
+          {error}
+        </div>
+
+        <button
+          onClick={loadProfile}
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg"
+        >
+          Retry
+        </button>
       </div>
     );
   }

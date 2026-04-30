@@ -1,5 +1,9 @@
 import api from "../api/api";
 
+
+// -----------------------------------
+// CREATE TRANSACTION
+// -----------------------------------
 export const createTransaction = async (data: any) => {
   const response = await api.post(
     "transactions/create/",
@@ -9,6 +13,9 @@ export const createTransaction = async (data: any) => {
   return response.data;
 };
 
+// -----------------------------------
+// GET CUSTOMER TRANSACTIONS
+// -----------------------------------
 export const getCustomerTransactions = async (
   phone: string,
   page: number = 1,
@@ -27,6 +34,9 @@ export const getCustomerTransactions = async (
   };
 };
 
+// -----------------------------------
+// GET TRANSACTIONS (MANAGER / ADMIN)
+// -----------------------------------
 export const getTransactions = async (
   range: string,
   page: number = 1,
@@ -66,6 +76,9 @@ export const getTransactions = async (
   };
 };
 
+// -----------------------------------
+// GET OWNER TRANSACTIONS
+// -----------------------------------
 export const getOwnerTransactions = async (
   range: string,
   page: number = 1,
@@ -99,6 +112,9 @@ export const getOwnerTransactions = async (
   };
 };
 
+// -----------------------------------
+// EXPORT TRANSACTIONS
+// -----------------------------------
 export const exportTransactions = async (
   range: string,
   startDate?: string,

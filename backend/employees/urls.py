@@ -8,12 +8,31 @@ from .views import (
     ManagerListView,
 )
 
+# -----------------------------------
+# DRF ROUTER SETUP
+# -----------------------------------
 router = DefaultRouter()
 router.register(r"", EmployeeViewSet)
 
+
+# -----------------------------------
+# URL PATTERNS
+# -----------------------------------
 urlpatterns = [
+    # -----------------------------
+    # PROFILE
+    # -----------------------------
     path("profile/", EmployeeProfileView.as_view()),
+
+    # -----------------------------
+    # ROLE-SPECIFIC LISTS
+    # -----------------------------
     path("attendants/", AttendantListView.as_view()),
+
     path("managers/", ManagerListView.as_view()),
+    
+    # -----------------------------
+    # DEFAULT EMPLOYEE ROUTES
+    # -----------------------------
     path("", include(router.urls)),
 ]

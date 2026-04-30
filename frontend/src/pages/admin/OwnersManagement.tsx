@@ -32,6 +32,9 @@ export default function OwnersManagement() {
   const [profileLoading, setProfileLoading] =
     useState(false);
 
+  const [listError, setListError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   const [selectedOwner, setSelectedOwner] =
     useState<any>(null);
 
@@ -56,13 +59,17 @@ export default function OwnersManagement() {
   const loadOwners = async () => {
     try {
       setLoading(true);
+      setListError(null);
 
-      const data =
-        await getOwners();
-
+      const data = await getOwners();
       setOwners(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+
+      setListError(
+        err?.response?.data?.detail ||
+        "Failed to load owners"
+      );
     } finally {
       setLoading(false);
     }
@@ -75,25 +82,26 @@ export default function OwnersManagement() {
   // -----------------------------------
   // LOAD OWNER PROFILE
   // -----------------------------------
-  const loadOwnerDetails =
-    async (owner: any) => {
-      try {
-        setProfileLoading(true);
+  const loadOwnerDetails = async (owner: any) => {
+    try {
+      setProfileLoading(true);
+      setProfileError(null);
 
-        const fullProfile =
-          await getOwnerById(
-            owner.id
-          );
+      const fullProfile = await getOwnerById(owner.id);
 
-        setSelectedOwner(
-          fullProfile
-        );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
+      setSelectedOwner(fullProfile);
+    } catch (err: any) {
+      console.error(err);
+
+      setProfileError(
+        err?.response?.data?.detail ||
+        "Failed to load owner profile"
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
 
   const filteredOwners = owners.filter((owner) => {
     const fullName =
@@ -142,6 +150,24 @@ export default function OwnersManagement() {
   }
 
   // -----------------------------------
+  // LIST ERROR (BLOCKING)
+  // -----------------------------------
+  if (listError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500 text-md">{listError}</p>
+
+        <button
+          onClick={loadOwners}
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // -----------------------------------
   // PROFILE LOADING
   // -----------------------------------
   if (profileLoading) {
@@ -159,10 +185,24 @@ export default function OwnersManagement() {
   // -----------------------------------
   if (selectedOwner) {
     return (
-      <OwnerProfileView
-        owner={selectedOwner}
-        onBack={handleBack}
-      />
+      <>
+        {profileError && (
+          <div className="p-3 text-red-600 text-center">
+            {profileError}
+          </div>
+        )}
+
+        {profileLoading && (
+          <div className="text-center text-gray-500 mt-4">
+            Updating profile...
+          </div>
+        )}
+
+        <OwnerProfileView
+          owner={selectedOwner}
+          onBack={handleBack}
+        />
+      </>
     );
   }
 

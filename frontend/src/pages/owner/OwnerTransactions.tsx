@@ -39,7 +39,9 @@ export default function OwnerTransactions() {
 
   const [loading, setLoading] = useState(true);
   const [tableLoading, setTableLoading] = useState(false);
-  const [error, setError] = useState("");
+
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [tableError, setTableError] = useState<string | null>(null);
 
   const [dateFilter, setDateFilter] = useState<DateFilter>("today");
   const [showFilters, setShowFilters] = useState(false);
@@ -62,7 +64,7 @@ export default function OwnerTransactions() {
 
     try {
       setTableLoading(true);
-      setError("");
+      setTableError(null);
 
       const res = await getOwnerTransactions(
         dateFilter,
@@ -80,9 +82,12 @@ export default function OwnerTransactions() {
       setTotalCount(res.total);
       setHasNext(!!res.next);
 
-    } catch (error) {
-      console.error(error);
-      setError("Failed to load transactions.");
+    } catch (err: any) {
+      console.error(err);
+      setTableError(
+        err?.response?.data?.detail ||
+        "Failed to load transactions."
+      );
     } finally {
       if (requestId === requestIdRef.current) {
         setTableLoading(false);
@@ -93,38 +98,33 @@ export default function OwnerTransactions() {
   // -----------------------------------
   // INITIAL LOAD
   // -----------------------------------
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setPageError(null);
+
+      const [txnRes, pumpsData] = await Promise.all([
+        getOwnerTransactions("today", 1, 20, "", "", "all", "all"),
+        getPumps(),
+      ]);
+
+      setTransactions(txnRes.data);
+      setTotalCount(txnRes.total);
+      setHasNext(!!txnRes.next);
+      setPumps(pumpsData);
+
+    } catch (err: any) {
+      console.error(err);
+      setPageError(
+        err?.response?.data?.detail ||
+        "Failed to load page data."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        setLoading(true);
-        setError("");
-
-        const [txnRes, pumpsData] = await Promise.all([
-          getOwnerTransactions(
-            "today",
-            1,
-            20,
-            "",
-            "",
-            "all",
-            "all"
-          ),
-          getPumps(),
-        ]);
-
-        setTransactions(txnRes.data);
-        setTotalCount(txnRes.total);
-        setHasNext(!!txnRes.next);
-        setPumps(pumpsData);
-
-      } catch (error) {
-        console.error(error);
-        setError("Failed to load page data.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadInitialData();
   }, []);
 
@@ -151,7 +151,8 @@ export default function OwnerTransactions() {
   // -----------------------------------
   const handleDateFilterChange = (filter: DateFilter) => {
     skipNextFetch.current = false;
-    
+    setTableError(null);
+
     setDateFilter(filter);
 
     if (filter === "custom") {
@@ -168,14 +169,17 @@ export default function OwnerTransactions() {
   // -----------------------------------
   // CUSTOM DATE SUBMIT
   // -----------------------------------
+  // -----------------------------------
+  // CUSTOM DATE
+  // -----------------------------------
   const handleCustomDateSubmit = () => {
     if (!startDate || !endDate) {
-      setError("Please select both dates.");
+      setTableError("Please select both dates.");
       return;
     }
 
     if (endDate < startDate) {
-      setError("End date cannot be before start date.");
+      setTableError("End date cannot be before start date.");
       return;
     }
 
@@ -190,7 +194,7 @@ export default function OwnerTransactions() {
   // -----------------------------------
   // CANCEL CUSTOM
   // -----------------------------------
-  const handleCancelCustomDate = () => {
+   const handleCancelCustomDate = () => {
     setShowCustomDatePicker(false);
     setDateFilter("today");
     setStartDate("");
@@ -235,6 +239,23 @@ export default function OwnerTransactions() {
   }
 
   // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
+        <p className="text-red-500">{pageError}</p>
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // -----------------------------------
   // UI
   // -----------------------------------
   return (
@@ -251,10 +272,17 @@ export default function OwnerTransactions() {
         }
       />
 
-      {error && (
+      {/* TABLE ERROR */}
+      {tableError && (
         <div className="px-6 mt-4">
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 text-sm">
-            {error}
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 flex justify-between">
+            <span>{tableError}</span>
+            <button
+              onClick={fetchTransactions}
+              className="text-blue-600 font-medium"
+            >
+              Retry
+            </button>
           </div>
         </div>
       )}
@@ -292,11 +320,6 @@ export default function OwnerTransactions() {
       )}
 
       <div className="px-6 mt-4">
-        {tableLoading && (
-          <div className="mb-3 text-sm text-gray-500">
-            Refreshing transactions...
-          </div>
-        )}
 
         <TransactionTable
           transactions={transactions}

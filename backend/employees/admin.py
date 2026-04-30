@@ -48,6 +48,10 @@ class EmployeeAdmin(admin.ModelAdmin):
         "created_at",
         "updated_at",
     )
+
+    # -----------------------------------
+    # DISPLAY HELPERS
+    # -----------------------------------
     
     def employee_name(self, obj):
         return obj.user.get_full_name() or obj.user.username

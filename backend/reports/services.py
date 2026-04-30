@@ -14,7 +14,7 @@ def to_datetime_range(start_date, end_date):
 
 
 # ---------------------------------------------------
-# BASE FILTER (CRITICAL FIX)
+# BASE FILTER
 # ---------------------------------------------------
 def valid_transactions(queryset):
     return queryset.filter(

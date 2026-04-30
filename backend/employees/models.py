@@ -4,6 +4,9 @@ from pumps.models import Pump
 
 class Employee(models.Model):
 
+    # -------------------------
+    # RELATIONS
+    # -------------------------
     owner = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -25,14 +28,22 @@ class Employee(models.Model):
         related_name="employees"
     )
 
+    # -------------------------
+    # TIMESTAMPS
+    # -------------------------
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-
+    # -------------------------
+    # META
+    # -------------------------
     class Meta:
         ordering = ["user__first_name"]
         unique_together = ["owner", "user"]
 
+    # -------------------------
+    # STRING REPRESENTATION
+    # -------------------------
     def __str__(self):
         employee_name = (
             self.user.get_full_name().strip()

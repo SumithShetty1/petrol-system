@@ -20,7 +20,12 @@ export type DateFilter =
 export default function AdminDashboard() {
   const [data, setData] = useState<any>(null);
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+
 
   const [dateFilter, setDateFilter] =
     useState<DateFilter>("today");
@@ -32,14 +37,22 @@ export default function AdminDashboard() {
   const [endDate, setEndDate] = useState("");
 
   // -----------------------------------
-  // LOAD DATA 
+  // LOAD DATA
   // -----------------------------------
   const loadDashboardData = async (
     filter: DateFilter,
     customStart?: string,
-    customEnd?: string
+    customEnd?: string,
+    isInitial = false
   ) => {
     try {
+      if (isInitial) {
+        setLoading(true);
+        setPageError(null);
+      } else {
+        setStatsError(null);
+      }
+
       const dashboard = await getAdminDashboard(
         filter,
         customStart,
@@ -47,10 +60,22 @@ export default function AdminDashboard() {
       );
 
       setData(dashboard);
-    } catch (error) {
-      console.error("Dashboard error:", error);
+    } catch (err: any) {
+      console.error(err);
+
+      const message =
+        err?.response?.data?.detail ||
+        "Failed to load dashboard";
+
+      if (isInitial) {
+        setPageError(message);
+      } else {
+        setStatsError(message);
+      }
     } finally {
-      setLoading(false);
+      if (isInitial) {
+        setLoading(false);
+      }
     }
   };
 
@@ -58,24 +83,16 @@ export default function AdminDashboard() {
   // INITIAL LOAD 
   // -----------------------------------
   useEffect(() => {
-    const init = async () => {
-      try {
-        const dashboard = await getAdminDashboard("today");
-        setData(dashboard);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    init();
+    loadDashboardData("today", undefined, undefined, true);
   }, []);
 
   // -----------------------------------
   // FILTER CHANGE
   // -----------------------------------
   const handleFilterChange = (filter: DateFilter) => {
+    setValidationError(null);
+    setStatsError(null);
+
     setDateFilter(filter);
 
     if (filter === "custom") {
@@ -92,10 +109,20 @@ export default function AdminDashboard() {
   // CUSTOM DATE APPLY
   // -----------------------------------
   const handleCustomDateSubmit = () => {
-    if (!startDate || !endDate) return;
+    setValidationError(null);
+    setStatsError(null);
+
+    if (!startDate || !endDate) {
+      setValidationError("Please select both dates");
+      return;
+    }
+
+    if (endDate < startDate) {
+      setValidationError("End date cannot be before start date");
+      return;
+    }
 
     loadDashboardData("custom", startDate, endDate);
-
     setShowCustomDatePicker(false);
   };
 
@@ -107,6 +134,7 @@ export default function AdminDashboard() {
     setDateFilter("today");
     setStartDate("");
     setEndDate("");
+    setValidationError(null);
 
     loadDashboardData("today");
   };
@@ -125,17 +153,25 @@ export default function AdminDashboard() {
   }
 
   // -----------------------------------
-  // NO DATA
+  // INITIAL ERROR (BLOCKING)
   // -----------------------------------
-  if (!data) {
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          No dashboard data available
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={() =>
+            loadDashboardData("today", undefined, undefined, true)
+          }
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
+
 
   // -----------------------------------
   // VALUES
@@ -164,6 +200,34 @@ export default function AdminDashboard() {
         title="Admin Dashboard"
         subtitle="Global Overview"
       />
+
+      {/* NON-BLOCKING ERRORS */}
+      {(validationError || statsError) && (
+        <div className="px-6 mt-4 space-y-2">
+          {validationError && (
+            <div className="bg-red-50 text-red-600 px-4 py-2 rounded">
+              {validationError}
+            </div>
+          )}
+
+          {statsError && (
+            <div className="bg-red-50 text-red-600 px-4 py-2 rounded flex justify-between">
+              <span>{statsError}</span>
+
+              <button
+                onClick={() =>
+                  dateFilter === "custom"
+                    ? loadDashboardData("custom", startDate, endDate)
+                    : loadDashboardData(dateFilter)
+                }
+                className="text-blue-600 font-medium"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+        </div>
+      )}
 
       <DateFilterTabs
         className="px-6 mt-4"
@@ -230,6 +294,7 @@ export default function AdminDashboard() {
           totalOwners={totalOwners}
         />
       </div>
+
     </div>
   );
 }

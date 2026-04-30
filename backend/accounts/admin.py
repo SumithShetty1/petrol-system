@@ -2,11 +2,14 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from .models import User
 
-
+# Register the custom User model with Django Admin
 @admin.register(User)
 class CustomUserAdmin(UserAdmin):
     model = User
 
+    # -----------------------------
+    # LIST VIEW CONFIGURATION
+    # -----------------------------
     list_display = (
         "id",
         "username",
@@ -25,12 +28,18 @@ class CustomUserAdmin(UserAdmin):
 
     ordering = ("-id",)
 
+    # -----------------------------
+    # READ-ONLY FIELDS
+    # -----------------------------
     readonly_fields = ("last_login", "date_joined", "created_at", "updated_at",)
     
     list_per_page = 25
 
     date_hierarchy = "created_at"
 
+    # -----------------------------
+    # FIELDSETS (EDIT VIEW)
+    # -----------------------------
     fieldsets = UserAdmin.fieldsets + (
         (
             "Custom Fields",
@@ -44,12 +53,18 @@ class CustomUserAdmin(UserAdmin):
         ),
     )
 
+    # -----------------------------
+    # ADD USER VIEW CONFIGURATION
+    # -----------------------------
     add_fieldsets = UserAdmin.add_fieldsets + (
         ("Custom Fields", {
             "fields": ("role",),
         }),
     )
     
+    # -----------------------------
+    # PERMISSION CONTROL
+    # -----------------------------
     def get_readonly_fields(self, request, obj=None):
         if not request.user.is_superuser:
             return self.readonly_fields + ("is_superuser",)

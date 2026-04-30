@@ -23,6 +23,9 @@ from customers.views import CustomerViewSet
 from fuel.views import FuelRateViewSet
 
 
+# -----------------------------
+# DRF ROUTER SETUP
+# -----------------------------
 router = DefaultRouter()
 
 router.register(r'pumps', PumpViewSet)
@@ -30,11 +33,25 @@ router.register(r'customers', CustomerViewSet)
 router.register(r'fuel-rates', FuelRateViewSet)
 
 
+# -----------------------------
+# MAIN URLPATTERNS
+# -----------------------------
 urlpatterns = [
+    # Django Admin Panel
     path('admin/', admin.site.urls),
+
+    # Authentication
     path('api/auth/', include('accounts.urls')),
+
+    # Employee-related APIs
     path("api/employees/", include("employees.urls")),
+
+    # Core resources handled by DRF router
     path('api/', include(router.urls)),
+
+    # Transaction APIs
     path("api/transactions/", include("transactions.urls")),
+
+    # Reports / analytics APIs
     path("api/reports/", include("reports.urls")),
 ]

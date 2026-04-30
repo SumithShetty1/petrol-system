@@ -44,6 +44,9 @@ class FuelRateAdmin(admin.ModelAdmin):
         "updated_at",
     )
 
+    # -----------------------------
+    # DISPLAY HELPERS
+    # -----------------------------
     def pump_code(self, obj):
         return obj.pump.pump_code if obj.pump else "—"
     

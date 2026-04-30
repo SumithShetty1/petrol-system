@@ -52,7 +52,7 @@ class RegisterUserView(generics.CreateAPIView):
 
 
 # -----------------------------------
-# LOGIN
+# LOGIN (JWT)
 # -----------------------------------
 class LoginView(TokenObtainPairView):
 

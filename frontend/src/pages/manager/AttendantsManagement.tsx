@@ -79,19 +79,36 @@ export default function AttendantsManagement() {
     setDeleteAttendantData,
   ] = useState<any>(null);
 
+    const [pageError, setPageError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [statsError, setStatsError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+
   // -----------------------------------
   // LOAD ATTENDANTS
   // -----------------------------------
   const loadAttendants = async () => {
     try {
       setLoading(true);
+            setPageError(null);
+
+      setListError(null);
 
       const data =
         await getAttendants();
 
       setAttendants(data);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+
+      const message =
+        err?.response?.data?.detail ||
+        "Unable to load attendants.";
+
+      setPageError(message);
+      setListError(message);
+
     } finally {
       setLoading(false);
     }
@@ -111,6 +128,8 @@ export default function AttendantsManagement() {
     end?: string
   ) => {
     try {
+      setStatsError(null);
+
       const stats =
         await getAttendantDashboardByPhone(
           phone,
@@ -120,8 +139,12 @@ export default function AttendantsManagement() {
         );
 
       setAttendantStats(stats);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setStatsError(
+        err?.response?.data?.detail ||
+        "Unable to load statistics"
+      );
     }
   };
 
@@ -132,6 +155,7 @@ export default function AttendantsManagement() {
     async (attendant: any) => {
       try {
         setProfileLoading(true);
+        setProfileError(null);
 
         const fullProfile =
           await getEmployeeById(
@@ -153,27 +177,29 @@ export default function AttendantsManagement() {
           attendant.phone,
           "today"
         );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
+      } catch (err: any) {
+      console.error(err);
+      setProfileError(
+        err?.response?.data?.detail ||
+        "Failed to load profile"
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
+
 
   const filteredAttendants = attendants.filter((attendant) => {
-    const searchValue = search.toLowerCase();
+    const q = search.toLowerCase();
 
-    const fullName =
-      `${attendant.first_name || ""} ${attendant.last_name || ""}`.toLowerCase();
-
+    const fullName = `${attendant.first_name || ""} ${attendant.last_name || ""}`.toLowerCase();
     const phone = (attendant.username || "").toLowerCase();
-
     const pump = (attendant.pump_name || "").toLowerCase();
 
     return (
-      fullName.includes(searchValue) ||
-      phone.includes(searchValue) ||
-      pump.includes(searchValue)
+      fullName.includes(q) ||
+      phone.includes(q) ||
+      pump.includes(q)
     );
   });
 
@@ -286,24 +312,30 @@ export default function AttendantsManagement() {
     };
 
   // -----------------------------------
-  // LOADING
+  // PAGE LOADING
   // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading attendants...
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading attendants...
       </div>
     );
   }
 
-  if (profileLoading) {
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading profile...
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadAttendants}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -311,50 +343,33 @@ export default function AttendantsManagement() {
   // -----------------------------------
   // PROFILE VIEW
   // -----------------------------------
-  if (
-    selectedAttendant
-  ) {
+  if (selectedAttendant) {
     return (
-      <AttendantProfileView
-        attendant={
-          selectedAttendant
-        }
-        stats={
-          attendantStats
-        }
-        dateFilter={
-          dateFilter
-        }
-        showCustomDatePicker={
-          showCustomDatePicker
-        }
-        startDate={
-          startDate
-        }
-        endDate={
-          endDate
-        }
-        onBack={
-          handleBackToList
-        }
-        onFilterChange={
-          handleFilterChange
-        }
-        onStartDateChange={
-          setStartDate
-        }
-        onEndDateChange={
-          setEndDate
-        }
-        onCustomDateSubmit={
-          handleCustomDateSubmit
-        }
-        onCancelCustomDate={() =>
-          setShowCustomDatePicker(
-            false
-          )
-        }
-      />
+      <>
+        {profileError && (
+          <div className="p-3 text-red-600 text-center">
+            {profileError}
+          </div>
+        )}
+
+        <AttendantProfileView
+          attendant={selectedAttendant}
+          stats={attendantStats}
+          dateFilter={dateFilter}
+          showCustomDatePicker={showCustomDatePicker}
+          startDate={startDate}
+          endDate={endDate}
+          onBack={handleBackToList}
+          onFilterChange={handleFilterChange}
+          onStartDateChange={setStartDate}
+          onEndDateChange={setEndDate}
+          onCustomDateSubmit={handleCustomDateSubmit}
+          onCancelCustomDate={() =>
+            setShowCustomDatePicker(false)
+          }
+          statsError={statsError}
+        />
+      </>
     );
   }
 
@@ -386,6 +401,16 @@ export default function AttendantsManagement() {
         placeholder="Search attendants..."
         resultCount={filteredAttendants.length}
       />
+
+       {/* LIST ERROR (NON-BLOCKING) */}
+      {listError && (
+        <div className="mx-4 mt-4 p-3 bg-red-50 border text-red-600 rounded-xl flex justify-between">
+          <span>{listError}</span>
+          <button onClick={loadAttendants} className="text-blue-600">
+            Retry
+          </button>
+        </div>
+      )}
 
       <PeopleList
         users={filteredAttendants.map((item) => ({

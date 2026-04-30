@@ -33,10 +33,10 @@ export default function LoginScreen({
         className="
           relative z-10
           flex-1
-          flex items-end md:items-center
+          flex items-center
           justify-center
           px-4 sm:px-6
-          -mt-32 md:-mt-40
+          -translate-y-20 sm:-translate-y-24 md:-translate-y-32
         "
       >
         <div

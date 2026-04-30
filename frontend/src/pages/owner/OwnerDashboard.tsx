@@ -24,6 +24,7 @@ export default function OwnerDashboard() {
 
   const [loading, setLoading] =
     useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [dateFilter, setDateFilter] =
     useState<DateFilter>("today");
@@ -48,18 +49,20 @@ export default function OwnerDashboard() {
     customEnd?: string
   ) => {
     try {
-      const dashboard =
-        await getOwnerDashboard(
-          filter,
-          customStart,
-          customEnd
-        );
+      setError(null);
+
+      const dashboard = await getOwnerDashboard(
+        filter,
+        customStart,
+        customEnd
+      );
 
       setData(dashboard);
-    } catch (error) {
-      console.error(
-        "Dashboard error:",
-        error
+    } catch (err: any) {
+      console.error(err);
+      setError(
+        err?.response?.data?.detail ||
+        "Failed to load dashboard"
       );
     }
   };
@@ -68,26 +71,22 @@ export default function OwnerDashboard() {
   // INITIAL LOAD
   // -----------------------------------
   useEffect(() => {
-    const loadInitialData =
-      async () => {
-        try {
-          const dashboardData =
-            await getOwnerDashboard(
-              "today"
-            );
+    const loadInitialData = async () => {
+      try {
+        setError(null);
 
-          setData(
-            dashboardData
-          );
-        } catch (error) {
-          console.error(
-            "Dashboard error:",
-            error
-          );
-        } finally {
-          setLoading(false);
-        }
-      };
+        const dashboardData = await getOwnerDashboard("today");
+        setData(dashboardData);
+      } catch (err: any) {
+        console.error(err);
+        setError(
+          err?.response?.data?.detail ||
+          "Failed to load dashboard"
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
 
     loadInitialData();
   }, []);
@@ -95,72 +94,42 @@ export default function OwnerDashboard() {
   // -----------------------------------
   // FILTER CHANGE
   // -----------------------------------
-  const handleFilterChange =
-    async (
-      filter: DateFilter
-    ) => {
-      setDateFilter(filter);
+  const handleFilterChange = async (filter: DateFilter) => {
+    setDateFilter(filter);
 
-      if (
-        filter === "custom"
-      ) {
-        setShowCustomDatePicker(
-          true
-        );
-        return;
-      }
+    if (filter === "custom") {
+      setShowCustomDatePicker(true);
+      return;
+    }
 
-      setShowCustomDatePicker(
-        false
-      );
-
-      await loadDashboardData(
-        filter
-      );
-    };
+    setShowCustomDatePicker(false);
+    await loadDashboardData(filter);
+  };
 
   // -----------------------------------
   // CUSTOM DATE APPLY
   // -----------------------------------
-  const handleCustomDateSubmit =
-    async () => {
-      if (
-        !startDate ||
-        !endDate
-      )
-        return;
+  const handleCustomDateSubmit = async () => {
+    if (!startDate || !endDate) {
+      setError("Please select both start and end date");
+      return;
+    }
 
-      await loadDashboardData(
-        "custom",
-        startDate,
-        endDate
-      );
-
-      setShowCustomDatePicker(
-        false
-      );
-    };
+    await loadDashboardData("custom", startDate, endDate);
+    setShowCustomDatePicker(false);
+  };
 
   // -----------------------------------
   // CUSTOM DATE CANCEL
   // -----------------------------------
-  const handleCancelCustomDate =
-    () => {
-      setShowCustomDatePicker(
-        false
-      );
+  const handleCancelCustomDate = () => {
+    setShowCustomDatePicker(false);
+    setDateFilter("today");
+    setStartDate("");
+    setEndDate("");
 
-      setDateFilter(
-        "today"
-      );
-
-      setStartDate("");
-      setEndDate("");
-
-      loadDashboardData(
-        "today"
-      );
-    };
+    loadDashboardData("today");
+  };
 
   // -----------------------------------
   // LOADING
@@ -171,6 +140,30 @@ export default function OwnerDashboard() {
         <div className="text-gray-500">
           Loading dashboard...
         </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // ERROR STATE
+  // -----------------------------------
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="text-red-500 text-md text-center">
+          {error}
+        </div>
+
+        <button
+          onClick={() =>
+            dateFilter === "custom"
+              ? loadDashboardData("custom", startDate, endDate)
+              : loadDashboardData(dateFilter)
+          }
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg"
+        >
+          Retry
+        </button>
       </div>
     );
   }

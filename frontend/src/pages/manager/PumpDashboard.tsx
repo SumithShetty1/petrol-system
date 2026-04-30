@@ -23,76 +23,136 @@ export default function PumpDashboard() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+
+  // -----------------------------------
+  // FETCH DASHBOARD
+  // -----------------------------------
   const loadDashboardData = async (
     filter: DateFilter,
     customStart?: string,
     customEnd?: string
   ) => {
     try {
+      setDashboardError(null);
+
       const dashboard = await getDashboard(filter, customStart, customEnd);
       setData(dashboard);
-    } catch (error) {
-      console.error("Dashboard error:", error);
+
+    } catch (err: any) {
+      console.error(err);
+      setDashboardError(
+        err?.response?.data?.detail ||
+        "Failed to load dashboard"
+      );
+    }
+  };
+
+  // -----------------------------------
+  // INITIAL LOAD
+  // -----------------------------------
+  const loadInitialData = async () => {
+    try {
+      setLoading(true);
+      setPageError(null);
+
+      const [pumpData, dashboardData] = await Promise.all([
+        getMyPump(),
+        getDashboard("today"),
+      ]);
+
+      setPump(pumpData);
+      setData(dashboardData);
+
+    } catch (err: any) {
+      console.error(err);
+      setPageError(
+        err?.response?.data?.detail ||
+        "Failed to load page data"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    const loadInitialData = async () => {
-      try {
-        const [myPumpData, dashboardData] = await Promise.all([
-          getMyPump(),
-          getDashboard("today"),
-        ]);
-
-        setPump(myPumpData);
-        setData(dashboardData);
-      } catch (error) {
-        console.error("Dashboard error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadInitialData();
   }, []);
 
+  // -----------------------------------
+  // FILTER CHANGE
+  // -----------------------------------
   const handleFilterChange = async (filter: DateFilter) => {
     setDateFilter(filter);
 
     if (filter === "custom") {
       setShowCustomDatePicker(true);
-    } else {
-      setShowCustomDatePicker(false);
-      await loadDashboardData(filter);
+      return;
     }
-  };
 
-  const handleCustomDateSubmit = async () => {
-    if (startDate && endDate) {
-      await loadDashboardData("custom", startDate, endDate);
-      setShowCustomDatePicker(false);
-    }
-  };
-
-  const handleCancelCustomDate = () => {
     setShowCustomDatePicker(false);
-    setDateFilter("today");
-    loadDashboardData("today");
     setStartDate("");
     setEndDate("");
+
+    await loadDashboardData(filter);
   };
 
+  // -----------------------------------
+  // CUSTOM DATE SUBMIT
+  // -----------------------------------
+  const handleCustomDateSubmit = async () => {
+    if (!startDate || !endDate) {
+      setDashboardError("Please select both dates");
+      return;
+    }
+
+    if (endDate < startDate) {
+      setDashboardError("End date cannot be before start date");
+      return;
+    }
+
+    await loadDashboardData("custom", startDate, endDate);
+    setShowCustomDatePicker(false);
+  };
+
+  // -----------------------------------
+  // CANCEL CUSTOM DATE
+  // -----------------------------------
+  const handleCancelCustomDate = async () => {
+    setShowCustomDatePicker(false);
+    setDateFilter("today");
+    setStartDate("");
+    setEndDate("");
+
+    await loadDashboardData("today");
+  };
+
+  // -----------------------------------
+  // INITIAL LOADING
+  // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading dashboard...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading dashboard...
       </div>
     );
   }
 
-  if (!data || !pump) {
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">No dashboard data available</div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -114,6 +174,25 @@ export default function PumpDashboard() {
         title="Pump Dashboard"
         subtitle={`${pump.pump_name} - ${pump.location || ""}`}
       />
+
+      {/* ERROR (NON-BLOCKING) */}
+      {dashboardError && (
+        <div className="px-6 mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg p-3 flex justify-between">
+            <span>{dashboardError}</span>
+            <button
+              onClick={() =>
+                dateFilter === "custom"
+                  ? loadDashboardData("custom", startDate, endDate)
+                  : loadDashboardData(dateFilter)
+              }
+              className="text-blue-600 font-medium"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Date Filter */}
       <DateFilterTabs

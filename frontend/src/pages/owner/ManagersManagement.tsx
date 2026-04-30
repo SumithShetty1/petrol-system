@@ -54,75 +54,119 @@ export default function ManagersManagement() {
   const [deleteManagerData, setDeleteManagerData] =
     useState<any>(null);
 
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [listError, setListError] = useState<string | null>(null);
+  const [pumpError, setPumpError] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   // -----------------------------------
-  // LOAD MANAGERS LIST
+  // LOAD MANAGERS + PUMPS (INITIAL)
   // -----------------------------------
-  const loadManagers = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
+      setPageError(null);
 
-      const data =
-        await getManagers();
+      const [managerData, pumpData] = await Promise.all([
+        getManagers(),
+        getAvailablePumps(),
+      ]);
 
-      setManagers(data);
-    } catch (error) {
-      console.error(error);
+      setManagers(managerData);
+      setPumps(pumpData);
+
+    } catch (err: any) {
+      console.error(err);
+      setPageError(
+        err?.response?.data?.detail ||
+        "Failed to load page data"
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  // -----------------------------------
+  // LOAD MANAGERS ONLY
+  // -----------------------------------
+  const loadManagers = async () => {
+    try {
+      setListError(null);
+
+      const data = await getManagers();
+      setManagers(data);
+
+    } catch (err: any) {
+      console.error(err);
+      setListError(
+        err?.response?.data?.detail ||
+        "Failed to load managers"
+      );
+    }
+  };
+
+  // -----------------------------------
+  // LOAD PUMPS ONLY
+  // -----------------------------------
   const loadPumps = async () => {
     try {
+      setPumpError(null);
+
       const data = await getAvailablePumps();
       setPumps(data);
-    } catch (error) {
-      console.error(error);
+
+    } catch (err: any) {
+      console.error(err);
+      setPumpError(
+        err?.response?.data?.detail ||
+        "Failed to load pumps"
+      );
     }
   };
 
   useEffect(() => {
-    loadManagers();
-    loadPumps();
+    loadInitialData();
   }, []);
+
 
   // -----------------------------------
   // LOAD FULL MANAGER PROFILE
   // -----------------------------------
-  const loadManagerDetails =
-    async (manager: any) => {
-      try {
-        setProfileLoading(true);
+  const loadManagerDetails = async (manager: any) => {
+    try {
+      setProfileLoading(true);
+      setProfileError(null);
 
-        const fullProfile =
-          await getEmployeeById(
-            manager.id
-          );
+      const fullProfile = await getEmployeeById(manager.id);
+      setSelectedManager(fullProfile);
 
-        setSelectedManager(
-          fullProfile
-        );
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setProfileLoading(false);
-      }
-    };
+    } catch (err: any) {
+      console.error(err);
+      setProfileError(
+        err?.response?.data?.detail ||
+        "Failed to load profile"
+      );
+    } finally {
+      setProfileLoading(false);
+    }
+  };
 
+  // -----------------------------------
+  // SEARCH FILTER
+  // -----------------------------------
   const filteredManagers = managers.filter((manager) => {
-    const searchValue = search.toLowerCase();
+    const q = search.toLowerCase();
 
     const fullName =
       `${manager.first_name || ""} ${manager.last_name || ""}`.toLowerCase();
 
     const phone = (manager.username || "").toLowerCase();
-
     const pump = (manager.pump_name || "").toLowerCase();
 
     return (
-      fullName.includes(searchValue) ||
-      phone.includes(searchValue) ||
-      pump.includes(searchValue)
+      fullName.includes(q) ||
+      phone.includes(q) ||
+      pump.includes(q)
     );
   });
 
@@ -155,27 +199,73 @@ export default function ManagersManagement() {
     };
 
   // -----------------------------------
-  // PAGE LOADING
+  // INITIAL LOADING
   // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading managers...
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading managers...
       </div>
     );
   }
 
   // -----------------------------------
-  // PROFILE LOADING
+  // PAGE ERROR (BLOCKING)
   // -----------------------------------
-  if (profileLoading) {
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">
-          Loading profile...
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadInitialData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+   // -----------------------------------
+  // PROFILE VIEW
+  // -----------------------------------
+  if (selectedManager) {
+    return (
+      <>
+        {profileError && (
+          <div className="p-3 text-red-600 text-center">
+            {profileError}
+          </div>
+        )}
+
+        {profileLoading && (
+          <div className="text-center py-4 text-gray-500">
+            Loading profile...
+          </div>
+        )}
+
+        <ManagerProfileView
+          manager={selectedManager}
+          onBack={handleBack}
+        />
+      </>
+    );
+  }
+
+  // -----------------------------------
+  // PROFILE ERROR (BLOCK)
+  // -----------------------------------
+  if (profileError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{profileError}</p>
+        <button
+          onClick={() => setSelectedManager(null)}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Back
+        </button>
       </div>
     );
   }
@@ -219,6 +309,26 @@ export default function ManagersManagement() {
           </button>
         }
       />
+
+      {/* LIST ERROR */}
+      {listError && (
+        <div className="mx-4 mt-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl flex justify-between">
+          <span>{listError}</span>
+          <button onClick={loadManagers} className="text-blue-600">
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* PUMP ERROR */}
+      {pumpError && (
+        <div className="mx-4 mt-2 p-3 bg-red-50 border border-red-200 text-red-600 rounded-xl flex justify-between">
+          <span>{pumpError}</span>
+          <button onClick={loadPumps} className="text-blue-600">
+            Retry
+          </button>
+        </div>
+      )}
 
       <SearchBar
         value={search}

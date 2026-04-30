@@ -45,13 +45,35 @@ export default function Login() {
 
       navigate(getRedirectByRole(decoded.role));
     } catch (err: any) {
-      
-      const message =
-        err?.response?.data?.detail ||
-        err?.response?.data?.error ||
-        "Invalid phone number or password";
+      console.error(err);
+
+      let message = "Something went wrong. Please try again.";
+
+      // NETWORK ERROR (Backend down / no internet)
+      if (!err.response) {
+        message = "Unable to connect to server. Please check your internet or try again later.";
+      }
+
+      // TIMEOUT ERROR
+      else if (err.code === "ECONNABORTED") {
+        message = "Request timed out. Server is taking too long to respond.";
+      }
+
+      // AUTH ERROR (WRONG CREDENTIALS)
+      else if (err.response.status === 401) {
+        message = "Invalid phone number or password.";
+      }
+
+      // OTHER SERVER ERRORS
+      else {
+        message =
+          err.response?.data?.detail ||
+          err.response?.data?.error ||
+          "Login failed. Please try again.";
+      }
 
       setError(message);
+
     } finally {
       setIsLoading(false);
     }

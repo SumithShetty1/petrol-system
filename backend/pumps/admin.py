@@ -49,7 +49,9 @@ class PumpAdmin(admin.ModelAdmin):
         "updated_at",
     )
     
-
+    # -----------------------------
+    # DISPLAY HELPERS
+    # -----------------------------
     def owner_name(self, obj):
         if obj.owner:
             return obj.owner.get_full_name() or obj.owner.username

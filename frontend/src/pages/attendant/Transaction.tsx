@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { createTransaction } from "../../services/transactionService";
-import { fetchCustomer } from "../../services/customerService";
+import { getCustomerByMobile } from "../../services/customerService";
 import { getFuelRates } from "../../services/fuelService";
 
 import PageHeader from "../../components/common/header/PageHeader";
@@ -127,7 +127,7 @@ export default function Transaction() {
     }
 
     try {
-      const data = await fetchCustomer(phone);
+      const data = await getCustomerByMobile(phone);
 
       if (data.length > 0) {
         const customer = data[0];

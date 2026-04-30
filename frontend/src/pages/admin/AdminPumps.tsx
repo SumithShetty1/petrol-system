@@ -26,6 +26,9 @@ export default function AdminPumps() {
 
   const [loading, setLoading] = useState(true);
 
+  const [listError, setListError] = useState<string | null>(null);
+  const [ownersError, setOwnersError] = useState<string | null>(null);
+
   const [showAddModal, setShowAddModal] = useState(false);
 
   const [editModal, setEditModal] = useState(false);
@@ -41,10 +44,17 @@ export default function AdminPumps() {
   const loadPumps = async () => {
     try {
       setLoading(true);
+      setListError(null);
+
       const data = await getPumps();
       setPumps(data);
-    } catch (error) {
-      console.error("Error loading pumps:", error);
+    } catch (err: any) {
+      console.error(err);
+
+      setListError(
+        err?.response?.data?.detail ||
+        "Failed to load pumps"
+      );
     } finally {
       setLoading(false);
     }
@@ -55,10 +65,17 @@ export default function AdminPumps() {
   // -----------------------------------
   const loadOwners = async () => {
     try {
+      setOwnersError(null);
+
       const data = await getOwners();
       setOwners(data);
-    } catch (error) {
-      console.error("Error loading owners:", error);
+    } catch (err: any) {
+      console.error(err);
+
+      setOwnersError(
+        err?.response?.data?.detail ||
+        "Failed to load owners"
+      );
     }
   };
 
@@ -106,6 +123,24 @@ export default function AdminPumps() {
   }
 
   // -----------------------------------
+  // ERROR
+  // -----------------------------------
+  if (listError) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500 text-md">{listError}</p>
+
+        <button
+          onClick={loadPumps}
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // -----------------------------------
   // UI
   // -----------------------------------
   return (
@@ -122,6 +157,22 @@ export default function AdminPumps() {
           </button>
         }
       />
+
+      {/* OWNERS ERROR */}
+      {ownersError && (
+        <div className="px-6 mt-4">
+          <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-3 flex justify-between items-center">
+            <span>{ownersError}</span>
+
+            <button
+              onClick={loadOwners}
+              className="text-blue-600 font-medium"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
 
       <SearchBar
         value={search}
@@ -166,8 +217,8 @@ export default function AdminPumps() {
 
                     <span
                       className={`px-2 py-0.5 text-xs font-semibold rounded-full ${pump.is_active
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
                         }`}
                     >
                       {pump.is_active ? "Active" : "Inactive"}

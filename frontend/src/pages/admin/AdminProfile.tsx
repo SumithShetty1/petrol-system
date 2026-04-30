@@ -14,24 +14,36 @@ export default function AdminProfile() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // -----------------------------------
   // LOAD PROFILE
   // -----------------------------------
-  useEffect(() => {
-    const loadProfile = async () => {
-      try {
-        const data = await getMyProfile();
-        setProfile(data);
-      } catch (error) {
-        console.error("Error loading profile:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const loadProfile = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
+      const data = await getMyProfile();
+      setProfile(data);
+
+    } catch (err: any) {
+      console.error(err);
+
+      setError(
+        err?.response?.data?.detail ||
+        "Failed to load profile"
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadProfile();
   }, []);
+
 
   // -----------------------------------
   // LOGOUT
@@ -50,6 +62,26 @@ export default function AdminProfile() {
         <div className="text-gray-500 text-lg">
           Loading...
         </div>
+      </div>
+    );
+  }
+
+  // -----------------------------------
+  // ERROR
+  // -----------------------------------
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500 text-md">
+          {error}
+        </p>
+
+        <button
+          onClick={loadProfile}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }

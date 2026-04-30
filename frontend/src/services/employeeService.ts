@@ -1,5 +1,6 @@
 import api from "../api/api";
 
+
 // -----------------------------------
 // ATTENDANTS
 // -----------------------------------
@@ -19,7 +20,6 @@ export const getManagers = async () => {
 // -----------------------------------
 // COMMON EMPLOYEE DETAIL
 // -----------------------------------
-
 export const getEmployeeById = async (id:number) => {
   const res = await api.get(`employees/${id}/`);
   return res.data;

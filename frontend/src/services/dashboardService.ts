@@ -28,7 +28,9 @@ export const getAdminDashboard =
     return res.data;
   };
 
-
+// -----------------------------------
+// ADMIN → SINGLE PUMP DASHBOARD
+// -----------------------------------
 export const getAdminPumpDashboard = async (
   pumpCode: string,
   range: string,
@@ -74,7 +76,7 @@ export const getOwnerDashboard = async (
 
 
 // -----------------------------------
-// OWNER SINGLE PUMP DASHBOARD
+// OWNER → SINGLE PUMP DASHBOARD
 // -----------------------------------
 export const getOwnerPumpDashboard = async (
   pumpCode: string,
@@ -98,7 +100,7 @@ export const getOwnerPumpDashboard = async (
 
 
 // -----------------------------------
-// MANAGER PUMP DASHBOARD
+// MANAGER → PUMP DASHBOARD
 // -----------------------------------
 export const getDashboard = async (
   range: string,
@@ -121,7 +123,7 @@ export const getDashboard = async (
 
 
 // -----------------------------------
-// ATTENDANT SELF DASHBOARD
+// ATTENDANT → SELF DASHBOARD
 // -----------------------------------
 export const getAttendantDashboard = async (
   range: string,
@@ -144,7 +146,7 @@ export const getAttendantDashboard = async (
 
 
 // -----------------------------------
-// MANAGER VIEW ATTENDANT DASHBOARD
+// MANAGER → VIEW ATTENDANT DASHBOARD
 // -----------------------------------
 export const getAttendantDashboardByPhone = async (
   phone: string,

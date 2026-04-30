@@ -21,35 +21,53 @@ export default function ManagerSettings() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  const [pageError, setPageError] = useState<string | null>(null);
+  const [fuelError, setFuelError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
   const { logout } = useAuth();
   const navigate = useNavigate();
 
-  // Load profile + fuel rates
+  // -----------------------------------
+  // LOAD DATA
+  // -----------------------------------
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      setPageError(null);
+      setFuelError(null);
+
+      const [profileData, fuelRatesData] = await Promise.all([
+        getProfile(),
+        getFuelRates(),
+      ]);
+
+      setProfile(profileData);
+
+      const rates: any = {};
+      fuelRatesData.forEach((rate: any) => {
+        rates[rate.fuel_type] = rate;
+      });
+
+      setFuelRates(rates);
+
+    } catch (error: any) {
+      console.error(error);
+
+      setPageError(
+        error?.response?.data?.detail ||
+        "Failed to load settings."
+      );
+
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const [profileData, fuelRatesData] = await Promise.all([
-          getProfile(),
-          getFuelRates(),
-        ]);
-
-        setProfile(profileData);
-
-        const rates: any = {};
-        fuelRatesData.forEach((rate: any) => {
-          rates[rate.fuel_type] = rate;
-        });
-
-        setFuelRates(rates);
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadData();
   }, []);
+
 
   // Logout
   const handleLogout = () => {
@@ -59,33 +77,56 @@ export default function ManagerSettings() {
 
   // Edit prices
   const handleEditPrices = () => {
+    setSaveError(null);
+
     setTempFuelPrices({
-      petrol: parseFloat(fuelRates.petrol?.price_per_litre || 0),
-      diesel: parseFloat(fuelRates.diesel?.price_per_litre || 0),
+      petrol: Number(fuelRates.petrol?.price_per_litre ?? 0),
+      diesel: Number(fuelRates.diesel?.price_per_litre ?? 0),
     });
     setIsEditingPrices(true);
   };
 
   const handlePriceChange = (type: "petrol" | "diesel", value: string) => {
+    const parsed = value.trim() === "" ? NaN : Number(value);
+
     setTempFuelPrices((prev) => ({
       ...prev,
-      [type]: value === "" ? 0 : parseFloat(value),
+      [type]: parsed,
     }));
   };
 
   // Save prices
   const handleSavePrices = async () => {
     setIsSaving(true);
+    setSaveError(null);
+
     try {
+      if (!fuelRates.petrol || !fuelRates.diesel) {
+        throw new Error("Fuel rates not initialized. Contact admin.");
+      }
+
+      if (
+        isNaN(tempFuelPrices.petrol) ||
+        isNaN(tempFuelPrices.diesel)
+      ) {
+        throw new Error("Please enter valid numbers");
+      }
+
+      if (tempFuelPrices.petrol < 0 || tempFuelPrices.diesel < 0) {
+        throw new Error("Fuel price cannot be negative");
+      }
+
+      const tasks = [];
+
       if (fuelRates.petrol) {
-        await updateFuelRate(fuelRates.petrol.id, tempFuelPrices.petrol);
+        tasks.push(updateFuelRate(fuelRates.petrol.id, tempFuelPrices.petrol));
       }
-
       if (fuelRates.diesel) {
-        await updateFuelRate(fuelRates.diesel.id, tempFuelPrices.diesel);
+        tasks.push(updateFuelRate(fuelRates.diesel.id, tempFuelPrices.diesel));
       }
 
-      // Refresh
+      await Promise.all(tasks);
+
       const updatedRates = await getFuelRates();
 
       const rates: any = {};
@@ -95,9 +136,16 @@ export default function ManagerSettings() {
 
       setFuelRates(rates);
       setIsEditingPrices(false);
-    } catch (error) {
-      console.error("Error saving fuel prices:", error);
-      alert("Failed to save fuel prices");
+
+    } catch (error: any) {
+      console.error(error);
+
+      setSaveError(
+        error?.response?.data?.detail ||
+        error.message ||
+        "Failed to save fuel prices"
+      );
+
     } finally {
       setIsSaving(false);
     }
@@ -105,21 +153,37 @@ export default function ManagerSettings() {
 
   const handleCancelEdit = () => {
     setIsEditingPrices(false);
-    setTempFuelPrices({ petrol: 0, diesel: 0 });
+    setTempFuelPrices({
+      petrol: Number(fuelRates.petrol?.price_per_litre ?? 0),
+      diesel: Number(fuelRates.diesel?.price_per_litre ?? 0),
+    });
   };
 
+  // -----------------------------------
+  // INITIAL LOADING
+  // -----------------------------------
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">Loading settings...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading settings...
       </div>
     );
   }
 
-  if (!profile) {
+  // -----------------------------------
+  // PAGE ERROR (BLOCKING)
+  // -----------------------------------
+  if (pageError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-500">No data found</div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <p className="text-red-500">{pageError}</p>
+
+        <button
+          onClick={loadData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -130,8 +194,26 @@ export default function ManagerSettings() {
         title="Settings"
       />
 
-      <div className="px-4 md:px-8 -mt-10 md:-mt-12 relative z-20">
-        <AccountSection profile={profile} onLogout={handleLogout} />
+      <div className="px-4 md:px-8 -mt-10 md:-mt-12 relative z-20 space-y-6">
+
+        {/* ACCOUNT */}
+        {profile ? (
+          <AccountSection profile={profile} onLogout={handleLogout} />
+        ) : (
+          <div className="bg-white p-6 rounded-xl text-gray-500 text-center">
+            Profile unavailable
+          </div>
+        )}
+
+        {/* FUEL ERROR */}
+        {fuelError && (
+          <div className="p-3 bg-red-50 border text-red-600 rounded-xl flex justify-between">
+            <span>{fuelError}</span>
+            <button onClick={loadData} className="text-blue-600">
+              Retry
+            </button>
+          </div>
+        )}
 
         <FuelPriceSettings
           fuelRates={fuelRates}
@@ -142,6 +224,7 @@ export default function ManagerSettings() {
           onPriceChange={handlePriceChange}
           onSave={handleSavePrices}
           onCancel={handleCancelEdit}
+          error={saveError}
         />
       </div>
     </div>

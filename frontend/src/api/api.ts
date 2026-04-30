@@ -1,9 +1,13 @@
 import axios from "axios";
 
+
+// -----------------------------------
+// BASE CONFIG
+// -----------------------------------
 const BASE_URL = import.meta.env.VITE_API_URL;
 
 const api = axios.create({
-  baseURL: `${BASE_URL}`,
+  baseURL: `${BASE_URL}/api/`,
 });
 
 // REQUEST INTERCEPTOR
@@ -28,7 +32,7 @@ api.interceptors.response.use(
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
-      !originalRequest.url?.includes("/auth/refresh")
+      !originalRequest.url?.includes("/auth/refresh/")
     ) {
       originalRequest._retry = true;
 
@@ -39,10 +43,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const res = await axios.post(
-          `${BASE_URL}/auth/refresh/`,
-          { refresh }
-        );
+        const res = await api.post("/auth/refresh/", { refresh });
 
         const newAccess = res.data.access;
 

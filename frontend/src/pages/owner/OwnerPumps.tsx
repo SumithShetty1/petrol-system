@@ -6,8 +6,6 @@ import {
   MapPin,
   Fuel,
   User,
-  X,
-  Search,
 } from "lucide-react";
 
 import { getPumps } from "../../services/pumpService";
@@ -26,23 +24,30 @@ export default function OwnerPumps() {
   const [loading, setLoading] =
     useState(true);
 
+  const [error, setError] = useState<string | null>(null);
+
+  // -----------------------------------
+  // LOAD PUMPS
+  // -----------------------------------
+  const loadPumps = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const data = await getPumps();
+      setPumps(data);
+    } catch (err: any) {
+      console.error("Error loading pumps:", err);
+      setError(
+        err?.response?.data?.detail ||
+        "Failed to load pumps"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const loadPumps = async () => {
-      try {
-        const data =
-          await getPumps();
-
-        setPumps(data);
-      } catch (error) {
-        console.error(
-          "Error loading pumps:",
-          error
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadPumps();
   }, []);
 
@@ -67,11 +72,31 @@ export default function OwnerPumps() {
     );
   }
 
+  // -----------------------------------
+  // ERROR STATE
+  // -----------------------------------
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 px-4">
+        <div className="text-red-500 text-md text-center">
+          {error}
+        </div>
+
+        <button
+          onClick={loadPumps}
+          className="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 pb-20">
       <PageHeader
         title="All Petrol Pumps"
-        subtitle={`${pumps.length} Stations`}
+        subtitle={`${pumps.length} Station${pumps.length !== 1 ? "s" : ""}`}
       />
 
       <SearchBar
@@ -86,7 +111,9 @@ export default function OwnerPumps() {
         {filteredPumps.length === 0 ? (
           <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-md text-center">
             <p className="text-gray-500 text-sm sm:text-base">
-              No pumps available
+              {search
+                ? "No matching pumps found"
+                : "No pumps available"}
             </p>
           </div>
         ) : (
@@ -121,8 +148,8 @@ export default function OwnerPumps() {
 
                       <span
                         className={`px-2 py-0.5 text-xs font-semibold rounded-full ${pump.is_active
-                            ? "bg-green-100 text-green-700"
-                            : "bg-red-100 text-red-700"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
                           }`}
                       >
                         {pump.is_active ? "Active" : "Inactive"}

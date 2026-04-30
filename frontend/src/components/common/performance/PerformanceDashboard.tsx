@@ -10,6 +10,7 @@ import type { DateFilter } from "../../../pages/attendant/Profile";
 
 type Props = {
   stats: any;
+  error?: string | null;
   range: DateFilter;
   showCustomDatePicker: boolean;
   startDate: string;
@@ -23,6 +24,7 @@ type Props = {
 
 export default function PerformanceDashboard({
   stats,
+  error,
   range,
   showCustomDatePicker,
   startDate,
@@ -33,14 +35,24 @@ export default function PerformanceDashboard({
   onCustomDateSubmit,
   onCancelCustomDate,
 }: Props) {
-  if (!stats) return null;
 
-  const petrolData = stats.fuel_breakdown?.petrol || { litres: 0, amount: 0 };
-  const dieselData = stats.fuel_breakdown?.diesel || { litres: 0, amount: 0 };
+  // -----------------------------------
+  // DATA SAFE ACCESS
+  // -----------------------------------
+  const petrolData = stats?.fuel_breakdown?.petrol || { litres: 0, amount: 0 };
+  const dieselData = stats?.fuel_breakdown?.diesel || { litres: 0, amount: 0 };
   const totalSales = (petrolData.amount || 0) + (dieselData.amount || 0);
 
   return (
-    <div className="bg-white rounded-2xl md:rounded-3xl shadow-lg p-6 md:p-8 space-y-6 md:space-y-8">
+    <div className="relative bg-white rounded-2xl md:rounded-3xl shadow-lg p-6 md:p-8 space-y-6 md:space-y-8">
+
+      {/* ERROR */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 rounded-lg px-4 py-2 text-sm">
+          {error}
+        </div>
+      )}
+
       {/* Section Title */}
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -89,7 +101,7 @@ export default function PerformanceDashboard({
       <TotalSalesCard amount={totalSales} />
 
       {/* Transaction Count */}
-      {stats.total_transactions !== undefined && (
+      {stats?.total_transactions !== undefined && (
         <TransactionCountCard count={stats.total_transactions} />
       )}
     </div>

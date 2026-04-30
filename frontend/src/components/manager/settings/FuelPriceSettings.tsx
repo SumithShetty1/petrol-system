@@ -6,6 +6,7 @@ type Props = {
   isEditing: boolean;
   tempPrices: { petrol: number; diesel: number };
   isSaving: boolean;
+  error?: string | null;
   onEdit: () => void;
   onPriceChange: (type: "petrol" | "diesel", value: string) => void;
   onSave: () => void;
@@ -17,11 +18,19 @@ export default function FuelPriceSettings({
   isEditing,
   tempPrices,
   isSaving,
+  error,
   onEdit,
   onPriceChange,
   onSave,
   onCancel,
 }: Props) {
+
+  const isInvalid =
+    isNaN(tempPrices.petrol) ||
+    isNaN(tempPrices.diesel) ||
+    tempPrices.petrol < 0 ||
+    tempPrices.diesel < 0;
+
   return (
     <div className="mt-6 bg-white rounded-2xl p-5 shadow-md">
       <div className="flex items-center justify-between mb-4">
@@ -42,12 +51,19 @@ export default function FuelPriceSettings({
         )}
       </div>
 
+      {/* ERROR */}
+      {error && (
+        <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm">
+          {error}
+        </div>
+      )}
+
       <div className="space-y-4">
         <FuelPriceRow
           type="petrol"
           label="Petrol Price"
           iconColor="text-blue-500"
-          price={parseFloat(fuelRates.petrol?.price_per_litre || 0)}
+          price={Number(fuelRates.petrol?.price_per_litre ?? 0)}
           isEditing={isEditing}
           tempValue={tempPrices.petrol}
           onPriceChange={onPriceChange}
@@ -57,13 +73,20 @@ export default function FuelPriceSettings({
           type="diesel"
           label="Diesel Price"
           iconColor="text-orange-500"
-          price={parseFloat(fuelRates.diesel?.price_per_litre || 0)}
+          price={Number(fuelRates.diesel?.price_per_litre ?? 0)}
           isEditing={isEditing}
           tempValue={tempPrices.diesel}
           onPriceChange={onPriceChange}
           noBorder
         />
       </div>
+
+      {/* VALIDATION MESSAGE */}
+      {isEditing && isInvalid && (
+        <p className="text-sm text-red-500 mt-2 text-center">
+          Enter valid fuel prices (0 or greater)
+        </p>
+      )}
 
       {/* Edit Mode Actions */}
       {isEditing && (
@@ -77,7 +100,7 @@ export default function FuelPriceSettings({
           </button>
           <button
             onClick={onSave}
-            disabled={isSaving}
+            disabled={isSaving || isInvalid}
             className="flex-1 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
           >
             {isSaving ? "Saving..." : "Save Changes"}

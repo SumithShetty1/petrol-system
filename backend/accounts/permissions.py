@@ -1,6 +1,9 @@
 from rest_framework.permissions import BasePermission
 
 
+# -----------------------------
+# SINGLE ROLE PERMISSIONS
+# -----------------------------
 class IsAdmin(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == "admin"
@@ -21,6 +24,9 @@ class IsAttendant(BasePermission):
         return request.user.is_authenticated and request.user.role == "attendant"
     
 
+# -----------------------------
+# MULTI-ROLE PERMISSIONS
+# -----------------------------
 class IsAdminOrOwner(BasePermission):
 
     def has_permission(self, request, view):

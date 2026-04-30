@@ -56,6 +56,11 @@ export default function PumpDashboardCard({
   onSubmitCustomDate,
   onCancelCustomDate,
 }: Props) {
+
+  // -----------------------------------
+  // DATA
+  // -----------------------------------
+
   const totalSales =
     stats?.total_sales || 0;
   

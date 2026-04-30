@@ -23,6 +23,9 @@ class PumpBaseReadSerializer(serializers.ModelSerializer):
 
     diesel_price = serializers.SerializerMethodField()
 
+    # -----------------------------
+    # MANAGER
+    # -----------------------------
     def get_manager_name(self, obj):
         if obj.manager and obj.manager.user:
             return (
@@ -36,6 +39,9 @@ class PumpBaseReadSerializer(serializers.ModelSerializer):
             return obj.manager.user.username
         return None
 
+    # -----------------------------
+    # OWNER
+    # -----------------------------
     def get_owner_id(self, obj):
         return obj.owner.id if obj.owner else None
 
@@ -52,6 +58,9 @@ class PumpBaseReadSerializer(serializers.ModelSerializer):
             return obj.owner.username
         return None
 
+    # -----------------------------
+    # FUEL PRICES
+    # -----------------------------
     def get_petrol_price(self, obj):
         fuel = obj.fuel_rates.filter(
             fuel_type="petrol"
@@ -75,7 +84,6 @@ class PumpBaseReadSerializer(serializers.ModelSerializer):
 
 # -----------------------------------
 # LIST PAGE
-# GET /pumps/
 # -----------------------------------
 class PumpListSerializer(
     PumpBaseReadSerializer
@@ -103,7 +111,6 @@ class PumpListSerializer(
 
 # -----------------------------------
 # DETAIL PAGE
-# GET /pumps/<pump_code>/
 # -----------------------------------
 class PumpDetailSerializer(
     PumpBaseReadSerializer
@@ -134,7 +141,6 @@ class PumpDetailSerializer(
 
 # -----------------------------------
 # DASHBOARD HEADER
-# GET /pumps/assigned/
 # -----------------------------------
 class PumpMiniSerializer(
     serializers.ModelSerializer
@@ -152,7 +158,6 @@ class PumpMiniSerializer(
 
 # -----------------------------------
 # CREATE / UPDATE
-# POST / PATCH / PUT
 # -----------------------------------
 class PumpWriteSerializer(
     serializers.ModelSerializer
@@ -172,6 +177,9 @@ class PumpWriteSerializer(
             "is_active",
         ]
 
+    # -----------------------------
+    # VALIDATION
+    # -----------------------------
     def validate(self, attrs):
         owner = attrs.get("owner", getattr(self.instance, "owner", None))
         manager = attrs.get("manager")
@@ -190,6 +198,9 @@ class PumpWriteSerializer(
     ):
         return value.upper().strip()
 
+    # -----------------------------
+    # UPDATE LOGIC
+    # -----------------------------
     @transaction.atomic
     def update(self, instance, validated_data):
         new_manager = validated_data.get("manager", None)
