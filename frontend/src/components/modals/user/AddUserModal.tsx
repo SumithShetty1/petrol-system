@@ -8,6 +8,7 @@ import {
   EyeOff,
   AlertCircle,
 } from "lucide-react";
+import { getCurrentUserRole } from "../../../utils/auth";
 
 
 type Role = "attendant" | "manager" | "owner";
@@ -40,6 +41,11 @@ export default function AddUserModal({
   onSubmit,
   pumps = [],
 }: Props) {
+  const currentUserRole = getCurrentUserRole();
+
+  const canAssignPump =
+    currentUserRole === "owner";
+
   const [form, setForm] = useState<FormState>({
     first_name: "",
     last_name: "",
@@ -103,7 +109,11 @@ export default function AddUserModal({
       newErrors.password = "Password is required";
     }
 
-    if ((role === "manager" || role === "attendant") && !form.pump_id) {
+    if (
+      canAssignPump &&
+      (role === "manager" || role === "attendant") &&
+      !form.pump_id
+    ) {
       newErrors.pump_id = "Pump is required";
     }
 
@@ -112,7 +122,7 @@ export default function AddUserModal({
 
   const handleSubmit = async () => {
     if (loading) return;
-    
+
     const validationErrors = validate();
 
     if (Object.keys(validationErrors).length > 0) {
@@ -132,10 +142,12 @@ export default function AddUserModal({
         is_active: form.is_active,
       };
 
-      if (role === "manager" || role === "attendant") {
-        if (form.pump_id) {
-          payload.pump_id = Number(form.pump_id);
-        }
+      if (
+        canAssignPump &&
+        (role === "manager" || role === "attendant") &&
+        form.pump_id
+      ) {
+        payload.pump_id = Number(form.pump_id);
       }
 
       await onSubmit(payload);
@@ -327,45 +339,46 @@ export default function AddUserModal({
               )}
             </div>
 
-            {(role === "manager" || role === "attendant") && (
-              <div>
-                <label className="text-sm font-medium text-gray-700 mb-1.5 block">
-                  Assign Pump <span className="text-red-500">*</span>
-                </label>
+            {canAssignPump &&
+              (role === "manager" || role === "attendant") && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700 mb-1.5 block">
+                    Assign Pump <span className="text-red-500">*</span>
+                  </label>
 
-                <select
-                  name="pump_id"
-                  value={form.pump_id}
-                  onChange={(e) => {
-                    setForm((prev) => ({
-                      ...prev,
-                      pump_id: e.target.value,
-                    }));
+                  <select
+                    name="pump_id"
+                    value={form.pump_id}
+                    onChange={(e) => {
+                      setForm((prev) => ({
+                        ...prev,
+                        pump_id: e.target.value,
+                      }));
 
-                    setErrors((prev) => ({
-                      ...prev,
-                      pump_id: "",
-                    }));
-                  }}
-                  className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
-                >
-                  <option value="">Select Pump</option>
+                      setErrors((prev) => ({
+                        ...prev,
+                        pump_id: "",
+                      }));
+                    }}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none bg-white"
+                  >
+                    <option value="">Select Pump</option>
 
-                  {pumps.map((pump) => (
-                    <option key={pump.id} value={pump.id}>
-                      {pump.pump_code} - {pump.pump_name}
-                    </option>
-                  ))}
-                </select>
+                    {pumps.map((pump) => (
+                      <option key={pump.id} value={pump.id}>
+                        {pump.pump_code} - {pump.pump_name}
+                      </option>
+                    ))}
+                  </select>
 
-                {errors.pump_id && (
-                  <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
-                    <AlertCircle className="w-3 h-3" />
-                    {errors.pump_id}
-                  </p>
-                )}
-              </div>
-            )}
+                  {errors.pump_id && (
+                    <p className="text-red-500 text-xs mt-1.5 flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3" />
+                      {errors.pump_id}
+                    </p>
+                  )}
+                </div>
+              )}
 
             {/* Status Toggle */}
             <div className="flex items-center justify-between py-1">

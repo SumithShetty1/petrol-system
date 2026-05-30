@@ -1,5 +1,3 @@
-// src/routes/ProtectedRoute.tsx
-
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { jwtDecode } from "jwt-decode";
