@@ -105,7 +105,7 @@ export default function Transaction() {
   };
 
   const getPointsEarned = () => {
-    return Math.floor(getFinalPayable() * 0.1);
+    return Number((getFinalPayable() * 0.1).toFixed(2));
   };
 
   const canShowRedeem = () => {
